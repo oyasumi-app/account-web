@@ -29,7 +29,8 @@ macro_rules! api_request {
         pub async fn $name() -> Result<$response, gloo_net::Error> {
             let url = endpoint!($path);
             let missing_body: Option<NoBody> = None;
-            let response = send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
+            let response =
+                send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
             let response = response.json::<$response>().await?;
             Ok(response)
         }

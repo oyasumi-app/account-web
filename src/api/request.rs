@@ -1,7 +1,7 @@
-use gloo_net::http::*;
-use serde::Serialize;
 use gloo_net::http::Request;
+use gloo_net::http::*;
 use gloo_net::Error;
+use serde::Serialize;
 
 /// Module containing methods to send requests to the API.
 
@@ -12,8 +12,7 @@ pub async fn send_request(
     method: Method,
     body: Option<impl Serialize>,
 ) -> Result<Response, Error> {
-    let request = Request::new(url)
-            .method(method);
+    let request = Request::new(url).method(method);
     let request_with_body;
     if let Some(body) = body {
         request_with_body = request.json(&body)?;

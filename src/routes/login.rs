@@ -1,14 +1,21 @@
 use serde::Deserialize;
 use serde::Serialize;
-use yew::{platform::spawn_local, prelude::*};
+use yew::prelude::*;
+
 use yew_hooks::use_async;
 use yew_router::prelude::use_navigator;
 
 use crate::api::*;
 
+use crate::components::CenteredBox;
+use crate::components::FormSubmitBtn;
+use crate::components::FormTextBox;
+use crate::components::Size;
 use crate::Route;
 use api_types::v1::LoginResponse;
 use web_sys::HtmlInputElement;
+
+use crate::components::LoadingSpinner;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LoginInfo {
@@ -42,20 +49,24 @@ pub fn login_page() -> Html {
     // Try logging in.
     let login_info = use_state(|| LoginInfo::default());
     let navigator = use_navigator().unwrap();
+    let is_logging_in = use_state(|| false);
 
     let user_login = {
         let login_info = login_info.clone();
+        let is_logging_in = is_logging_in.clone();
         use_async(async move {
             let request = (*login_info).clone().into();
+            is_logging_in.set(true);
             let response = auth_login(request).await;
             match response {
-                Ok(LoginResponse::Ok { token }) => {
+                Ok(LoginResponse::Ok { token: _ }) => {
                     log::info!("Logged in!");
 
                     navigator.push(&Route::Dashboard);
                 }
                 _ => {
                     log::info!("Failed to log in!");
+                    is_logging_in.set(false);
                     navigator.push(&Route::Login);
                 }
             }
@@ -91,11 +102,15 @@ pub fn login_page() -> Html {
     };
 
     html! {
-        <div>
+        <CenteredBox>
             <h1>{ "Login" }</h1>
-            <input type="text" placeholder="Username" value={login_info.login.clone()} oninput={oninput_login} />
-            <input type="password" placeholder="Password" value={login_info.password.clone()} oninput={oninput_pw} />
-            <button onclick={onsubmit}>{ "Login" }</button>
-        </div>
+            <FormTextBox id="login" input_type="email" label="Username or Email" value={login_info.login.clone()} oninput={oninput_login} />
+            <FormTextBox id="password" input_type="password" label="Password" value={login_info.password.clone()} oninput={oninput_pw} />
+            <FormSubmitBtn onclick={onsubmit}>
+                <LoadingSpinner show={*is_logging_in} size={Size::Small} />
+                { "Login" }
+            </FormSubmitBtn>
+
+        </CenteredBox>
     }
 }
