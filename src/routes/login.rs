@@ -50,17 +50,18 @@ pub fn login_page() -> Html {
             let response = auth_login(request).await;
             match response {
                 Ok(LoginResponse::Ok { token }) => {
+                    log::info!("Logged in!");
+
                     navigator.push(&Route::Dashboard);
                 }
                 _ => {
+                    log::info!("Failed to log in!");
                     navigator.push(&Route::Login);
                 }
             }
             Ok::<(), ()>(())
         })
     };
-
-
 
     let oninput_login = {
         let login_info = login_info.clone();
@@ -83,24 +84,11 @@ pub fn login_page() -> Html {
     };
 
     let onsubmit = {
-        let login_info = login_info.clone();
         Callback::from(move |event: MouseEvent| {
             event.prevent_default();
-            let info = (*login_info).clone();
-            spawn_local(async move {
-                let response = auth_login(info.into()).await;
-                match response {
-                    Ok(LoginResponse::Ok { token }) => {
-                        log::info!("Logged in!");
-                    }
-                    _ => {
-                        log::info!("Failed to log in!");
-                    }
-                }
-            });
+            user_login.run();
         })
     };
-        
 
     html! {
         <div>

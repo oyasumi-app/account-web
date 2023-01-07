@@ -18,18 +18,18 @@ struct NoBody;
 /// - `response`: the type of the response body, e.g. `LoginResponse`
 macro_rules! api_request {
     ($name:ident, $path:expr, $method:ident, $body:ty, $response:ty) => {
-        pub async fn $name(body: $body) -> Result<$response, reqwest::Error> {
+        pub async fn $name(body: $body) -> Result<$response, gloo_net::Error> {
             let url = endpoint!($path);
-            let response = send_request(&url, reqwest::Method::$method, Some(body)).await?;
+            let response = send_request(&url, gloo_net::http::Method::$method, Some(body)).await?;
             let response = response.json::<$response>().await?;
             Ok(response)
         }
     };
     ($name:ident, $path:expr, $method:ident, $response:ty) => {
-        pub async fn $name() -> Result<$response, reqwest::Error> {
+        pub async fn $name() -> Result<$response, gloo_net::Error> {
             let url = endpoint!($path);
             let missing_body: Option<NoBody> = None;
-            let response = send_request(&url, reqwest::Method::$method, missing_body).await?;
+            let response = send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
             let response = response.json::<$response>().await?;
             Ok(response)
         }

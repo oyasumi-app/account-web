@@ -1,4 +1,7 @@
+use gloo_net::http::*;
 use serde::Serialize;
+use gloo_net::http::Request;
+use gloo_net::Error;
 
 /// Module containing methods to send requests to the API.
 
@@ -6,17 +9,17 @@ use serde::Serialize;
 /// Attach the Authorization header if there is a token cookie available.
 pub async fn send_request(
     url: &str,
-    method: reqwest::Method,
+    method: Method,
     body: Option<impl Serialize>,
-) -> Result<reqwest::Response, reqwest::Error> {
-    let client = reqwest::Client::new();
-    let mut request = client.request(method, url);
-
+) -> Result<Response, Error> {
+    let request = Request::new(url)
+            .method(method);
+    let request_with_body;
     if let Some(body) = body {
-        request = request.json(&body);
+        request_with_body = request.json(&body)?;
+    } else {
+        request_with_body = request;
     }
-
-    let response = request.send().await?;
-
-    Ok(response)
+    let request = request_with_body.credentials(RequestCredentials::Include);
+    request.send().await
 }
