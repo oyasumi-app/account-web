@@ -1,24 +1,24 @@
 use yew::prelude::*;
+use yew_router::prelude::*;
 
-#[function_component]
-fn App() -> Html {
-    let counter = use_state(|| 0);
-    let onclick = {
-        let counter = counter.clone();
-        move |_| {
-            let value = *counter + 1;
-            counter.set(value);
-        }
-    };
+mod routes;
 
+#[macro_use]
+mod api;
+
+pub use routes::Route;
+
+#[function_component(Main)]
+fn app() -> Html {
     html! {
-        <div>
-            <button {onclick}>{ "+1" }</button>
-            <p>{ *counter }</p>
-        </div>
+        <BrowserRouter>
+            <Switch<Route> render={routes::switch} /> // <- must be child of <BrowserRouter>
+        </BrowserRouter>
     }
 }
 
 fn main() {
-    yew::Renderer::<App>::new().render();
+    wasm_logger::init(wasm_logger::Config::default());
+    log::info!("Starting app");
+    yew::Renderer::<Main>::new().render();
 }
