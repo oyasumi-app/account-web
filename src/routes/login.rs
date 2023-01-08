@@ -23,17 +23,17 @@ pub struct LoginInfo {
     pub password: String,
 }
 
-impl Into<api_types::v1::LoginRequest> for LoginInfo {
-    fn into(self) -> api_types::v1::LoginRequest {
-        if self.login.contains('@') {
+impl From<LoginInfo> for api_types::v1::LoginRequest {
+    fn from(val: LoginInfo) -> Self {
+        if val.login.contains('@') {
             api_types::v1::LoginRequest::EmailPassword {
-                email: self.login,
-                password: self.password,
+                email: val.login,
+                password: val.password,
             }
         } else {
             api_types::v1::LoginRequest::UsernamePassword {
-                username: self.login,
-                password: self.password,
+                username: val.login,
+                password: val.password,
             }
         }
     }
@@ -47,7 +47,7 @@ pub struct LoginInfoWrapper {
 #[function_component(Login)]
 pub fn login_page() -> Html {
     // Try logging in.
-    let login_info = use_state(|| LoginInfo::default());
+    let login_info = use_state(LoginInfo::default);
     let navigator = use_navigator().unwrap();
     let is_logging_in = use_state(|| false);
 
@@ -100,16 +100,16 @@ pub fn login_page() -> Html {
             user_login.run();
         })
     };
-
     html! {
-        <CenteredBox>
-            <h1>{ "Login" }</h1>
-            <FormTextBox id="login" input_type="email" label="Username or Email" value={login_info.login.clone()} oninput={oninput_login} />
-            <FormTextBox id="password" input_type="password" label="Password" value={login_info.password.clone()} oninput={oninput_pw} />
-            <FormSubmitBtn onclick={onsubmit}>
-                <LoadingSpinner show={*is_logging_in} size={Size::Small} />
-                { "Login" }
-            </FormSubmitBtn>
+        <CenteredBox title={"Login"} >
+            <form>
+                <FormTextBox id="login" input_type="email" label="Username or Email" value={login_info.login.clone()} oninput={oninput_login} />
+                <FormTextBox id="password" input_type="password" label="Password" value={login_info.password.clone()} oninput={oninput_pw} />
+                <FormSubmitBtn onclick={onsubmit}>
+                    <LoadingSpinner show={*is_logging_in} size={Size::Small} />
+                    { "Login" }
+                </FormSubmitBtn>
+            </form>
 
         </CenteredBox>
     }

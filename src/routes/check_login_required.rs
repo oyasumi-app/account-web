@@ -5,6 +5,8 @@ use crate::api::*;
 
 use crate::Route;
 
+use crate::components::ModalLoadingSpinner;
+
 #[function_component(CheckLoginRequired)]
 pub fn check_login_required() -> Html {
     // Perform an API call to check if the user is logged in.
@@ -27,6 +29,6 @@ pub fn check_login_required() -> Html {
     });
 
     html! {
-        <h1>{ "Loading..." }</h1>
+        <ModalLoadingSpinner text="Checking for existing login..." />
     }
 }

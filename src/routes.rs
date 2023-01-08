@@ -5,6 +5,8 @@ mod check_login_required;
 use check_login_required::CheckLoginRequired;
 mod login;
 use login::Login;
+mod dashboard;
+use dashboard::Dashboard;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
@@ -30,8 +32,9 @@ pub fn switch(routes: Route) -> Html {
             <Secure />
         },
         Route::Login => html! { <Login /> },
-        Route::NotFound => html! { <h1>{ "404" }</h1> },
+        Route::Dashboard => html! { <Dashboard /> },
 
+        Route::NotFound => html! { <h1>{ "404" }</h1> },
         #[allow(unreachable_patterns)]
         _ => html! { <h1>{ "Unknown route: this is a bug!" }</h1> },
     }

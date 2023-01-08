@@ -39,3 +39,4 @@ macro_rules! api_request {
 
 api_request!(auth_check, "auth/check", GET, CheckResponse);
 api_request!(auth_login, "auth/login", POST, LoginRequest, LoginResponse);
+api_request!(auth_get_current_token, "auth/token/@me", GET, TokenData);
