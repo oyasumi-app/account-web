@@ -1,3 +1,4 @@
+use api_types::Snowflake;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -7,8 +8,12 @@ mod login;
 use login::Login;
 mod dashboard;
 use dashboard::Dashboard;
+mod register;
+use register::Register;
 
-#[derive(Clone, Routable, PartialEq)]
+use crate::components::BigError;
+
+#[derive(Clone, Routable, PartialEq, Debug)]
 pub enum Route {
     #[at("/")]
     Home,
@@ -19,6 +24,10 @@ pub enum Route {
     Login,
     #[at("/dashboard")]
     Dashboard,
+    #[at("/register")]
+    Register,
+    #[at("/confirm_register/:id")]
+    ConfirmRegister { id: Snowflake },
 
     #[not_found]
     #[at("/404")]
@@ -33,10 +42,16 @@ pub fn switch(routes: Route) -> Html {
         },
         Route::Login => html! { <Login /> },
         Route::Dashboard => html! { <Dashboard /> },
+        Route::Register => html! { <Register /> },
 
         Route::NotFound => html! { <h1>{ "404" }</h1> },
         #[allow(unreachable_patterns)]
-        _ => html! { <h1>{ "Unknown route: this is a bug!" }</h1> },
+        route => html! {
+            <BigError short_name="Unimplemented route"
+                text="You visited an route that was recognized by the app, but which has not been implemented. This is an application bug."
+                diagnostics={format!("attempted route {:?} fell through routing match statement", route)}
+            />
+        },
     }
 }
 
