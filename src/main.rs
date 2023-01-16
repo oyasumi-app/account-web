@@ -5,8 +5,8 @@ extern crate console_error_panic_hook;
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
 
-
 mod components;
+mod context;
 mod routes;
 
 #[macro_use]
@@ -16,7 +16,6 @@ pub use routes::Route;
 
 #[function_component(Main)]
 fn app() -> Html {
-    assert!(false);
     html! {
         <BrowserRouter>
             <Switch<Route> render={routes::switch} /> // <- must be child of <BrowserRouter>
@@ -30,9 +29,8 @@ fn panic_hook(info: &std::panic::PanicInfo) {
 
     // Produce a string in the same way as the default panic hook
     let panic_info = {
-
         #[wasm_bindgen]
-        extern {
+        extern "C" {
             #[wasm_bindgen(js_namespace = console)]
             fn error(msg: String);
 
@@ -66,11 +64,10 @@ fn panic_hook(info: &std::panic::PanicInfo) {
     };
 
     let mut panic_info_str = String::new();
-    html_escape::encode_text_to_string(&panic_info, &mut panic_info_str);
-
+    html_escape::encode_text_to_string(panic_info, &mut panic_info_str);
 
     // Render the big_error component
- 
+
     let props = components::style::full_page::BigErrorProps {
         short_name: "Unrecoverable Error".into(),
         text: Some("There was an error that was not handled by the code, causing a \"panic\".".into()),
@@ -83,8 +80,6 @@ fn panic_hook(info: &std::panic::PanicInfo) {
     let document = web_sys::window().unwrap().document().unwrap();
     let body = document.body().unwrap();
     body.set_inner_html(big_error_html);
-
-
 }
 
 fn main() {

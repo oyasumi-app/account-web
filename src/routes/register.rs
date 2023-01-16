@@ -32,7 +32,6 @@ impl From<RegisterInfo> for api_types::v1::RegistrationRequest {
     }
 }
 
-
 #[function_component(Register)]
 pub fn register() -> Html {
     let register_info = use_state(RegisterInfo::default);
@@ -56,7 +55,7 @@ pub fn register() -> Html {
                 }
                 Ok(api_types::v1::RegistrationResponse::DatabaseError) => {
                     // TODO: retry?
-                },
+                }
                 Err(_) => {
                     // TODO: retry?
                 }
@@ -93,7 +92,6 @@ pub fn register() -> Html {
         })
     };
 
-
     let oninput_password = {
         let register_info = register_info.clone();
         Callback::from(move |event: InputEvent| {
@@ -103,7 +101,6 @@ pub fn register() -> Html {
             register_info.set(info);
         })
     };
-
 
     html! {
         <CenteredBox title={"Registration"} >

@@ -15,7 +15,7 @@ pub fn centered_box(props: &ModalLoadingSpinnerProps) -> Html {
         <CenteredBox>
             <div class="d-flex flex-column justify-content-center align-content-center">
                 <div class="mb-3"><LoadingSpinner style="width: 3rem; height: 3rem;" size={Size::Large} inline={false} /></div>
-                <h4>{props.text.clone()}</h4>
+                <h4 class="align-self-center">{props.text.clone()}</h4>
             </div>
         </CenteredBox>
 

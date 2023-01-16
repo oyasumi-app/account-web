@@ -72,7 +72,7 @@ pub fn big_error(props: &BigErrorProps) -> Html {
 /// This is used when the panic hook is triggered:
 /// it should use the same HTML as the `BigError` component,
 /// but it can't use the component because it's in the panic hook.
-/// 
+///
 /// TODO: At present, this duplicates code from the [`BigError`] component,
 /// as well as the [`CenteredBox`] component.
 /// Can we refactor this so that the component's implementation is used?

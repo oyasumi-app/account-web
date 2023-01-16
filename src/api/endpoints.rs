@@ -17,6 +17,7 @@ struct NoBody;
 /// - `body`: the type of the request body, e.g. `LoginRequest` (optional)
 /// - `response`: the type of the response body, e.g. `LoginResponse`
 macro_rules! api_request {
+    // Request has body and response type
     ($name:ident, $path:expr, $method:ident, $body:ty, $response:ty) => {
         pub async fn $name(body: $body) -> Result<$response, gloo_net::Error> {
             let url = endpoint!($path);
@@ -25,6 +26,8 @@ macro_rules! api_request {
             Ok(response)
         }
     };
+
+    // Request has no body and a response type
     ($name:ident, $path:expr, $method:ident, $response:ty) => {
         pub async fn $name() -> Result<$response, gloo_net::Error> {
             let url = endpoint!($path);
@@ -35,9 +38,27 @@ macro_rules! api_request {
             Ok(response)
         }
     };
+
+    // Request has no body and no response type (returns whether request returned a 2xx status code)
+    ($name:ident, $path:expr, $method:ident) => {
+        pub async fn $name() -> Result<bool, gloo_net::Error> {
+            let url = endpoint!($path);
+            let missing_body: Option<NoBody> = None;
+            let response =
+                send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
+            Ok(response.ok())
+        }
+    };
 }
 
 api_request!(auth_check, "auth/check", GET, CheckResponse);
 api_request!(auth_login, "auth/login", POST, LoginRequest, LoginResponse);
 api_request!(auth_get_current_token, "auth/token/@me", GET, TokenData);
-api_request!(auth_register, "auth/register", POST, RegistrationRequest, RegistrationResponse);
+api_request!(
+    auth_register,
+    "auth/register",
+    POST,
+    RegistrationRequest,
+    RegistrationResponse
+);
+api_request!(auth_logout, "auth/token/@me", DELETE);
