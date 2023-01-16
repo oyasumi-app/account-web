@@ -16,3 +16,6 @@ yew-router = "0.17.0"
 api-types = { path = "../main-api/api-types" }
 web-sys = { version = "0.3.55", features = ["Document", "HtmlDocument"] }
 gloo-net = "0.2.5"
+console_error_panic_hook = "0.1.7"
+wasm-bindgen = "0.2.83"
+html-escape = { version = "0.2.13", default-features = false }
