@@ -100,20 +100,20 @@ pub fn big_error_when_panic(title: &str, props: &BigErrorProps) -> String {
 
     // Short name
     html.push_str("<h1 class=\"display-5\">");
-    html.push_str(&props.short_name.to_string());
+    html.push_str(&props.short_name);
     html.push_str("</h1>");
 
     // Text
     if let Some(text) = &props.text {
         html.push_str("<p class=\"lead\">");
-        html.push_str(&text.to_string());
+        html.push_str(text);
         html.push_str("</p>");
     }
 
     // What to do
     if let Some(what_to_do) = &props.what_to_do {
         html.push_str("<p>");
-        html.push_str(&what_to_do.to_string());
+        html.push_str(what_to_do);
         html.push_str("</p>");
     }
 
@@ -122,7 +122,7 @@ pub fn big_error_when_panic(title: &str, props: &BigErrorProps) -> String {
         html.push_str("<details>");
         html.push_str("<summary> Diagnostic information </summary>");
         html.push_str("<pre style=\"white-space: pre;\"><code>");
-        html.push_str(&diagnostics.to_string());
+        html.push_str(diagnostics);
         html.push_str("</code></pre>");
         html.push_str("</details>");
     }

@@ -10,7 +10,7 @@ use crate::{context::UserContext, components::LogoutButton};
 #[function_component(UserMenu)]
 pub fn user_menu() -> Html {
     let user_ctx = use_context::<Rc<UserContext>>();
-    if let None = user_ctx {
+    if user_ctx.is_none() {
         log::error!("UserMenu: UserContext is not set!");
         return html! {};
     }

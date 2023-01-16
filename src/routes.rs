@@ -49,7 +49,7 @@ pub fn switch(routes: Route) -> Html {
         route => html! {
             <BigError short_name="Unimplemented route"
                 text="You visited an route that was recognized by the app, but which has not been implemented. This is an application bug."
-                diagnostics={format!("attempted route {:?} fell through routing match statement", route)}
+                diagnostics={format!("attempted route {route:?} fell through routing match statement")}
             />
         },
     }
