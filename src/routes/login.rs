@@ -28,12 +28,12 @@ impl From<LoginInfo> for api_types::v1::LoginRequest {
         if val.login.contains('@') {
             api_types::v1::LoginRequest::EmailPassword {
                 email: val.login,
-                password: val.password,
+                password: val.password.into(),
             }
         } else {
             api_types::v1::LoginRequest::UsernamePassword {
                 username: val.login,
-                password: val.password,
+                password: val.password.into(),
             }
         }
     }
