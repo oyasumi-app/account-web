@@ -15,7 +15,7 @@ struct NoBody;
 /// - `path`: the path of the endpoint, e.g. "auth/login"
 /// - `method`: the HTTP method to use, e.g. "POST"
 /// - `body`: the type of the request body, e.g. `LoginRequest` (optional)
-/// - `response`: the type of the response body, e.g. `LoginResponse`
+/// - `response`: the type of the response body, e.g. `LoginResponse` (optional, if not provided, the function returns a bool of status==2xx)
 macro_rules! api_request {
     // Request has body and response type
     ($name:ident, $path:expr, $method:ident, $body:ty, $response:ty) => {

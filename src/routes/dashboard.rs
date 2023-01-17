@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use yew::suspense::use_future;
 use yew::{platform::spawn_local, prelude::*};
-use yew_router::prelude::use_navigator;
+use yew_router::prelude::{use_navigator, use_route, Link};
 
 use crate::api;
 
@@ -40,30 +40,54 @@ fn dashboard_inner() -> HtmlResult {
         (),
     );
 
+    let cur_route: Route = use_route().expect("Route in DashboardInner expected to be one of the dashboard routes");
+
     let result_html = match &*req_result {
         Ok(info) => {
             let username = &info.user.username;
             log::info!("Dashboard: Logged in with {:?}", context);
+
+            let routes = vec![
+                (Route::Dashboard, "Home"),
+                (Route::Dashboard1, "Tab 1"),
+                (Route::Dashboard2, "Tab 2"),
+                (Route::Dashboard3, "Tab 3"),
+            ];
+
+            let tabs = routes
+                .iter()
+                .map(|(route, name)| {
+                    let active = cur_route == *route;
+                    let maybe_active = if active { Some("active") } else { None };
+                    html! {
+                        <Link<Route> classes={classes!("nav-link", maybe_active)} to={route.clone()}> // role="tab" aria-selected="true"
+                                {name}
+                        </Link<Route>>
+                    }
+                })
+                .collect::<Html>();
+
+                let cur_tab_content = routes.iter().find(|(route, _)| cur_route == *route).map(|(_, name)| {
+                    html! {
+                        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+                            <h1>{name}</h1>
+                            <p>{format!("Hello, {}!", username)}</p>
+                        </div>
+                    }
+                }).unwrap();
+
             html! {
                 <ContextProvider<Rc<UserContext>> context={context}>
                 <DashboardLayout>
                     <div class="row">
                         <div class="col-2">
                             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                <a class="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">{"Home"}</a>
-                                <a class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile" aria-selected="false">{"Profile"}</a>
-                                <a class="nav-link" id="v-pills-messages-tab" data-bs-toggle="pill" href="#v-pills-messages" role="tab" aria-controls="v-pills-messages" aria-selected="false">{"Messages"}</a>
-                                <a class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings" aria-selected="false">{"Settings"}</a>
+                                {tabs}
                             </div>
                         </div>
                         <div class="col-10">
-                            <div class="tab-content" id="v-pills-tabContent">
-                                <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-                                    <h1>{format!("Welcome, {username}!")}</h1>
-                                </div>
-                                <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">{"..."}</div>
-                                <div class="tab-pane fade" id="v-pills-messages" role="tabpanel" aria-labelledby="v-pills-messages-tab">{"..."}</div>
-                                <div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">{"..."}</div>
+                            <div class="tab-content">
+                                {cur_tab_content}
                             </div>
                         </div>
                     </div>

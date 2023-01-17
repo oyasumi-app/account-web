@@ -24,6 +24,14 @@ pub enum Route {
     Login,
     #[at("/dashboard")]
     Dashboard,
+    
+    #[at("/dashboard/1")]
+    Dashboard1,
+    #[at("/dashboard/2")]
+    Dashboard2,
+    #[at("/dashboard/3")]
+    Dashboard3,
+
     #[at("/register")]
     Register,
     #[at("/confirm_register/:id")]
@@ -42,6 +50,11 @@ pub fn switch(routes: Route) -> Html {
         },
         Route::Login => html! { <Login /> },
         Route::Dashboard => html! { <Dashboard /> },
+        
+        Route::Dashboard1 => html! { <Dashboard /> },
+        Route::Dashboard2 => html! { <Dashboard /> },
+        Route::Dashboard3 => html! { <Dashboard /> },
+
         Route::Register => html! { <Register /> },
 
         Route::NotFound => html! { <h1>{ "404" }</h1> },
