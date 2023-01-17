@@ -3,7 +3,7 @@ use std::rc::Rc;
 use api_types::v1::TokenData;
 use yew::prelude::*;
 
-use crate::{context::UserContext, components::LogoutButton};
+use crate::{components::LogoutButton, context::UserContext};
 
 /// A component that displays a user menu as a dropdown.
 /// The menu contains a link to the user's profile, and a logout button.

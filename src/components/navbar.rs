@@ -13,7 +13,7 @@ pub fn dashboard_navbar() -> Html {
     html! {
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
-            <Link<Route> to={Route::Dashboard} classes="navbar-brand">{"Navbar"}</Link<Route>>
+            <Link<Route> to={Route::DashboardHome} classes="navbar-brand">{"Navbar"}</Link<Route>>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardNavbarItemContainer" aria-controls="dashboardNavbarItemContainer" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -21,7 +21,7 @@ pub fn dashboard_navbar() -> Html {
         <div class="collapse navbar-collapse" id="dashboardNavbarItemContainer">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <Link<Route> to={Route::Dashboard} classes="nav-link">{"Home"}</Link<Route>>
+                    <Link<Route> to={Route::DashboardHome} classes="nav-link">{"Home"}</Link<Route>>
                 </li>
             </ul>
 

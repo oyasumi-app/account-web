@@ -2,13 +2,15 @@ use std::rc::Rc;
 
 use yew::suspense::use_future;
 use yew::{platform::spawn_local, prelude::*};
-use yew_router::prelude::{use_navigator, use_route, Link};
+use yew_router::prelude::use_navigator;
 
 use crate::api;
 
 use crate::components::{DashboardLayout, ModalLoadingSpinner};
 use crate::context::UserContext;
 use crate::Route;
+
+mod tabs;
 
 #[function_component(Dashboard)]
 pub fn dashboard() -> Html {
@@ -40,41 +42,9 @@ fn dashboard_inner() -> HtmlResult {
         (),
     );
 
-    let cur_route: Route = use_route().expect("Route in DashboardInner expected to be one of the dashboard routes");
-
     let result_html = match &*req_result {
-        Ok(info) => {
-            let username = &info.user.username;
+        Ok(_) => {
             log::info!("Dashboard: Logged in with {:?}", context);
-
-            let routes = vec![
-                (Route::Dashboard, "Home"),
-                (Route::Dashboard1, "Tab 1"),
-                (Route::Dashboard2, "Tab 2"),
-                (Route::Dashboard3, "Tab 3"),
-            ];
-
-            let tabs = routes
-                .iter()
-                .map(|(route, name)| {
-                    let active = cur_route == *route;
-                    let maybe_active = if active { Some("active") } else { None };
-                    html! {
-                        <Link<Route> classes={classes!("nav-link", maybe_active)} to={route.clone()}> // role="tab" aria-selected="true"
-                                {name}
-                        </Link<Route>>
-                    }
-                })
-                .collect::<Html>();
-
-                let cur_tab_content = routes.iter().find(|(route, _)| cur_route == *route).map(|(_, name)| {
-                    html! {
-                        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-                            <h1>{name}</h1>
-                            <p>{format!("Hello, {}!", username)}</p>
-                        </div>
-                    }
-                }).unwrap();
 
             html! {
                 <ContextProvider<Rc<UserContext>> context={context}>
@@ -82,12 +52,12 @@ fn dashboard_inner() -> HtmlResult {
                     <div class="row">
                         <div class="col-2">
                             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                {tabs}
+                                <tabs::DashboardTabColumn />
                             </div>
                         </div>
                         <div class="col-10">
                             <div class="tab-content">
-                                {cur_tab_content}
+                                <tabs::DashboardTabContent />
                             </div>
                         </div>
                     </div>

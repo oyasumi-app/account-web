@@ -20,7 +20,7 @@ pub fn check_login_required() -> Html {
 
         match response {
             Ok(api_types::v1::CheckResponse::ValidToken(_)) => {
-                navigator.push(&Route::Dashboard);
+                navigator.push(&Route::DashboardHome);
             }
             _ => {
                 navigator.push(&Route::Login);

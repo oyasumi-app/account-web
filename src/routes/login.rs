@@ -62,7 +62,7 @@ pub fn login_page() -> Html {
                 Ok(LoginResponse::Ok { token: _ }) => {
                     log::info!("Logged in!");
 
-                    navigator.push(&Route::Dashboard);
+                    navigator.push(&Route::DashboardHome);
                 }
                 _ => {
                     log::info!("Failed to log in!");
