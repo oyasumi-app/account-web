@@ -1,18 +1,36 @@
-use api_types::Snowflake;
-use yew::{prelude::*, suspense::use_future_with_deps, platform::spawn_local};
+use std::rc::Rc;
 
-use crate::{components::{ModalLoadingSpinner, DangerAlert, LoadingSpinner, Size}, api::*};
+use api_types::Snowflake;
+use yew::{prelude::*, suspense::use_future_with_deps};
+use yew_hooks::use_async;
+use yew_router::prelude::use_navigator;
+
+use crate::{components::{DangerAlert, LoadingSpinner, Size}, api::*, context::UserContext, Route};
 
 #[function_component(SessionList)]
 pub fn session_list() -> Html {
     let fallback = html! {
-        <ModalLoadingSpinner text="Loading your sessions..." />
+        <>
+            <div class="btn-group mb-3" role="group">
+                <button class="btn btn-primary placeholder" disabled={true}>{"Refresh"}</button>
+                <button class="btn btn-danger placeholder" disabled={true}>{"Revoke all except current session"}</button>
+            </div>
+            <SessionListFallback />
+            <SessionListFallback />
+            <SessionListFallback />
+        </>
     };
 
     html! {
+        <>
+        <h2>{ "Current active sessions" }</h2>
+        <p>
+            { "If you see a session that you don't recognize, you can revoke it here." }
+        </p>
         <Suspense {fallback}>
             <SessionListInner />
         </Suspense>
+        </>
     }
 }
 
@@ -27,6 +45,18 @@ fn session_list_inner() -> HtmlResult {
     }, refresh_pulse_out);
     let sessions = sessions?;
 
+    let revoke_many = {
+        let refresh_pulse_out = refresh_pulse.clone();
+        use_async(async move {
+            let res = auth_delete_other_tokens().await;
+            if let Err(e) = res {
+                log::error!("Failed to revoke many: {:?}", e);
+            };
+            refresh_pulse_out.set(!*refresh_pulse_out);
+            Ok::<(), ()>(())
+        })
+    };
+
     let result_html = match &*sessions {
         Ok(token_snowflakes) => {
             let session_list_rows = token_snowflakes.iter().map(|token_snowflake| {
@@ -37,15 +67,20 @@ fn session_list_inner() -> HtmlResult {
 
             html!{
                 <>
-                    <h2>{ "Current active sessions" }</h2>
-                    <p>
-                        { "If you see a session that you don't recognize, you can revoke it here." }
-                    </p>
-                    <button class="btn btn-primary" onclick={Callback::from(move |_| {
-                        refresh_pulse.set(!*refresh_pulse);
-                    })}>
-                        { "Refresh" }
-                    </button>
+                    <div class="btn-group mb-3" role="group">
+                        <button class="btn btn-primary" onclick={Callback::from(move |_| {
+                            refresh_pulse.set(!*refresh_pulse);
+                        })}>
+                            { "Refresh" }
+                        </button>
+                        <button class="btn btn-danger" onclick={Callback::from(move |_| {
+                            revoke_many.run();
+                        })}>
+                            { "Revoke all except current session" }
+                        </button>
+                    </div>
+
+
                     { session_list_rows }
                 </>
             }
@@ -68,11 +103,14 @@ struct SessionListRowProps {
 
 #[function_component(SessionListRow)]
 fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
+    let current_session = use_context::<Rc<UserContext>>().expect("UserContext not found while rendering SessionListRow");
     let session = use_future_with_deps(|session_id| async move {
         let res = auth_get_token(*session_id).await;
         res
     }, props.session_id);
     let session = session?;
+
+    let navigator = use_navigator().expect("Navigator not found while rendering SessionListRow");
 
     let token_id = use_state(|| props.session_id);
     let is_deleting = use_state(|| false);
@@ -80,37 +118,62 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
     let is_hidden = use_state(|| false);
     let is_hidden_into_callback = is_hidden.clone();
 
-    let perform_revocation = Callback::from(move |_| {
-        let token_id = token_id.clone();
-        let is_deleting = is_deleting_into_callback.clone();
-        let is_hidden = is_hidden_into_callback.clone();
-        spawn_local(async move {
+    let is_current_session = use_state(|| match &*current_session {
+        UserContext::LoggedOut => panic!("Logged out while rendering SessionListRow"),
+        UserContext::LoggedIn(token_data) => {
+            token_data.token.id == props.session_id
+        }
+    });
+    let is_current_session_out = is_current_session.clone();
+
+    let perform_revocation = {
+        let is_current_session = is_current_session_out;
+        let is_deleting = is_deleting_into_callback;
+        let is_hidden = is_hidden_into_callback;
+        use_async(async move {
             is_deleting.set(true);
             let res = auth_delete_token(*token_id).await;
             if let Ok(true) = res {
                 log::info!("Revoked token: {}", *token_id);
                 is_hidden.set(true);
+                if *is_current_session {
+                    navigator.push(&Route::Login);
+                }
             } else {
                 log::error!("Failed to revoke token: {}", *token_id);
             }
             is_deleting.set(false);
-        });
-    });
+            Ok::<(), ()>(())
+        })
+    };
 
     if *is_hidden {
         return Ok(html!{});
     }
 
+    let highlight_class = match *is_current_session {
+        true => Some("border-warning text-warning"),
+        false => None,
+    };
+    let button_name = match *is_current_session {
+        true => "Revoke (and log out)",
+        false => "Revoke",
+    };
+    let button_class = match *is_current_session {
+        true => "btn-danger",
+        false => "btn-secondary",
+    };
+
     let result_html = match &*session {
         Ok(token_info) => {
             html! {
-                <div class="card">
+                <div class={classes!("card", "mb-3", highlight_class)}>
                     <div class="card-body">
                         <h5 class="card-title">{token_info.token.id}</h5>
                         <p class="card-text">{format!("Expires at: {}", token_info.token.expires)}</p>
-                        <button class="btn btn-danger" onclick={perform_revocation}>
+                        <button class={classes!("btn", button_class)} onclick={Callback::from(move |_| { perform_revocation.run(); })}>
                             <LoadingSpinner show={*is_deleting} size={Size::Small} />
-                            {"Revoke"}
+                            {button_name}
                         </button>
                     </div>
                 </div>
@@ -124,4 +187,23 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
     };
 
     Ok(result_html)
+}
+
+#[function_component(SessionListFallback)]
+fn session_list_fallback() -> Html {
+    html! {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title" aria-hidden="true">
+                        <span class="placeholder col-3"></span>
+                        <LoadingSpinner show={true} size={Size::Small} />
+                    </h5>
+                    <p class="card-text">
+                        <span class="placeholder col-6"></span>
+                    </p>
+                    <button class="btn btn-danger placeholder col-2">
+                    </button>
+                </div>
+            </div>
+    }
 }

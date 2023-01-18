@@ -131,3 +131,4 @@ api_request!(auth_get_tokens, "auth/token/list", GET, Vec<Snowflake>);
 
 api_request_with_path!(auth_get_token, GET, Snowflake, TokenData, "auth/token/by_id/{}", .to_string());
 api_request_with_path!(auth_delete_token, DELETE, Snowflake, "auth/token/by_id/{}", .to_string());
+api_request!(auth_delete_other_tokens, "auth/token/list", DELETE);
