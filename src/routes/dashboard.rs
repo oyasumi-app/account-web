@@ -11,6 +11,7 @@ use crate::context::UserContext;
 use crate::Route;
 
 mod tabs;
+mod profile_page;
 
 #[function_component(Dashboard)]
 pub fn dashboard() -> Html {

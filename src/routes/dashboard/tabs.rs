@@ -10,7 +10,7 @@ pub fn get_dashboard_tab() -> Html {
         Route::DashboardHome => html! { <h1>{"Home"}</h1> },
         Route::Dashboard1 => html! { <h1>{"Tab 1"}</h1> },
         Route::Dashboard2 => html! { <h1>{"Tab 2"}</h1> },
-        Route::Dashboard3 => html! { <h1>{"Tab 3"}</h1> },
+        Route::DashboardProfile => html! { <super::profile_page::DashboardProfile /> },
         _ => panic!("called get_dashboard_tab with route that is not a dashboard tab (specifically, {route:?})"),
     }
 }
@@ -23,7 +23,7 @@ pub fn dashboard_tab_column() -> Html {
         (Route::DashboardHome, "Home"),
         (Route::Dashboard1, "Tab 1"),
         (Route::Dashboard2, "Tab 2"),
-        (Route::Dashboard3, "Tab 3"),
+        (Route::DashboardProfile, "Profile Settings"),
     ];
 
     let tabs = routes

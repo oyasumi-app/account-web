@@ -2,8 +2,9 @@ use std::rc::Rc;
 
 use api_types::v1::TokenData;
 use yew::prelude::*;
+use yew_router::prelude::Link;
 
-use crate::{components::LogoutButton, context::UserContext};
+use crate::{components::LogoutButton, context::UserContext, Route};
 
 /// A component that displays a user menu as a dropdown.
 /// The menu contains a link to the user's profile, and a logout button.
@@ -24,7 +25,7 @@ pub fn user_menu() -> Html {
                     {&user.username}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#">{"Profile (TODO)"}</a></li>
+                    <li><Link<Route> classes="dropdown-item" to={Route::DashboardProfile}>{"Profile"}</Link<Route>></li>
                     <li><LogoutButton class="dropdown-item" /></li>
                 </ul>
             </div>
