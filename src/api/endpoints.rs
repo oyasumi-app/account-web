@@ -1,8 +1,8 @@
 use crate::api::*;
 /// This contains macro-generated functions representing the different API requests that can be made.
 use crate::endpoint;
-use api_types::Snowflake;
 use api_types::v1::*;
+use api_types::Snowflake;
 
 /// This struct is used to convince the type system to allow us to send_request a None body:
 /// if it were Some, it would have to be a type that implements Serialize.
@@ -114,14 +114,12 @@ macro_rules! api_request_with_path {
 
 }
 
-
-
 api_request!(auth_check, "auth/check", GET, CheckResponse);
 api_request!(auth_login, "auth/login", POST, LoginRequest, LoginResponse);
 api_request!(auth_get_current_token, "auth/token/@me", GET, TokenData);
 api_request!(
     auth_register,
-    "auth/register",
+    "auth/registration",
     POST,
     RegistrationRequest,
     RegistrationResponse
@@ -132,3 +130,10 @@ api_request!(auth_get_tokens, "auth/token/list", GET, Vec<Snowflake>);
 api_request_with_path!(auth_get_token, GET, Snowflake, TokenData, "auth/token/by_id/{}", .to_string());
 api_request_with_path!(auth_delete_token, DELETE, Snowflake, "auth/token/by_id/{}", .to_string());
 api_request!(auth_delete_other_tokens, "auth/token/list", DELETE);
+
+api_request!(
+    events_get_stream_list,
+    "events/stream/list",
+    GET,
+    Vec<EventStream>
+);

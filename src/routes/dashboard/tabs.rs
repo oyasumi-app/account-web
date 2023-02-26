@@ -7,7 +7,7 @@ use crate::Route;
 pub fn get_dashboard_tab() -> Html {
     let route = use_route().expect("called get_dashboard_tab with unknown route");
     match route {
-        Route::DashboardHome => html! { <h1>{"Home"}</h1> },
+        Route::DashboardHome => html! { <super::home::DashboardHome /> },
         Route::Dashboard1 => html! { <h1>{"Tab 1"}</h1> },
         Route::Dashboard2 => html! { <h1>{"Tab 2"}</h1> },
         Route::DashboardProfile => html! { <super::profile_page::DashboardProfile /> },

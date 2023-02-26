@@ -25,16 +25,9 @@ pub struct LoginInfo {
 
 impl From<LoginInfo> for api_types::v1::LoginRequest {
     fn from(val: LoginInfo) -> Self {
-        if val.login.contains('@') {
-            api_types::v1::LoginRequest::EmailPassword {
-                email: val.login,
-                password: val.password.into(),
-            }
-        } else {
-            api_types::v1::LoginRequest::UsernamePassword {
-                username: val.login,
-                password: val.password.into(),
-            }
+        api_types::v1::LoginRequest::EmailPassword {
+            email: val.login,
+            password: val.password.into(),
         }
     }
 }

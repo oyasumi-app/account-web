@@ -10,8 +10,9 @@ use crate::components::{DashboardLayout, ModalLoadingSpinner};
 use crate::context::UserContext;
 use crate::Route;
 
-mod tabs;
+mod home;
 mod profile_page;
+mod tabs;
 
 #[function_component(Dashboard)]
 pub fn dashboard() -> Html {

@@ -5,7 +5,12 @@ use yew::{prelude::*, suspense::use_future_with_deps};
 use yew_hooks::use_async;
 use yew_router::prelude::use_navigator;
 
-use crate::{components::{DangerAlert, LoadingSpinner, Size}, api::*, context::UserContext, Route};
+use crate::{
+    api::*,
+    components::{DangerAlert, LoadingSpinner, Size},
+    context::UserContext,
+    Route,
+};
 
 #[function_component(SessionList)]
 pub fn session_list() -> Html {
@@ -39,10 +44,13 @@ fn session_list_inner() -> HtmlResult {
     let refresh_pulse = use_state(|| false);
     let refresh_pulse_out = refresh_pulse.clone();
 
-    let sessions = use_future_with_deps(|_refresh_pulse_state| async {
-        let res = auth_get_tokens().await;
-        res
-    }, refresh_pulse_out);
+    let sessions = use_future_with_deps(
+        |_refresh_pulse_state| async {
+            let res = auth_get_tokens().await;
+            res
+        },
+        refresh_pulse_out,
+    );
     let sessions = sessions?;
 
     let revoke_many = {
@@ -59,13 +67,16 @@ fn session_list_inner() -> HtmlResult {
 
     let result_html = match &*sessions {
         Ok(token_snowflakes) => {
-            let session_list_rows = token_snowflakes.iter().map(|token_snowflake| {
-                html! {
-                    <SessionListRow session_id={*token_snowflake} />
-                }
-            }).collect::<Html>();
+            let session_list_rows = token_snowflakes
+                .iter()
+                .map(|token_snowflake| {
+                    html! {
+                        <SessionListRow session_id={*token_snowflake} />
+                    }
+                })
+                .collect::<Html>();
 
-            html!{
+            html! {
                 <>
                     <div class="btn-group mb-3" role="group">
                         <button class="btn btn-primary" onclick={Callback::from(move |_| {
@@ -84,8 +95,7 @@ fn session_list_inner() -> HtmlResult {
                     { session_list_rows }
                 </>
             }
-
-        },
+        }
         Err(_) => {
             html! {
                 <DangerAlert message="Failed to load your sessions. Try reloading the page." />
@@ -103,11 +113,15 @@ struct SessionListRowProps {
 
 #[function_component(SessionListRow)]
 fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
-    let current_session = use_context::<Rc<UserContext>>().expect("UserContext not found while rendering SessionListRow");
-    let session = use_future_with_deps(|session_id| async move {
-        let res = auth_get_token(*session_id).await;
-        res
-    }, props.session_id);
+    let current_session = use_context::<Rc<UserContext>>()
+        .expect("UserContext not found while rendering SessionListRow");
+    let session = use_future_with_deps(
+        |session_id| async move {
+            let res = auth_get_token(*session_id).await;
+            res
+        },
+        props.session_id,
+    );
     let session = session?;
 
     let navigator = use_navigator().expect("Navigator not found while rendering SessionListRow");
@@ -120,9 +134,7 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
 
     let is_current_session = use_state(|| match &*current_session {
         UserContext::LoggedOut => panic!("Logged out while rendering SessionListRow"),
-        UserContext::LoggedIn(token_data) => {
-            token_data.token.id == props.session_id
-        }
+        UserContext::LoggedIn(token_data) => token_data.token.id == props.session_id,
     });
     let is_current_session_out = is_current_session.clone();
 
@@ -148,7 +160,7 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
     };
 
     if *is_hidden {
-        return Ok(html!{});
+        return Ok(html! {});
     }
 
     let highlight_class = match *is_current_session {
@@ -178,7 +190,7 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
                     </div>
                 </div>
             }
-        },
+        }
         Err(_) => {
             html! {
                 <DangerAlert message={format!("Failed to load info on session {}. Try reloading the page.", props.session_id)} />
