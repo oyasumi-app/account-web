@@ -3,7 +3,7 @@ use serde::Serialize;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::use_async;
-use yew_router::prelude::use_navigator;
+use yew_router::prelude::*;
 
 use crate::api;
 
@@ -63,8 +63,6 @@ pub fn register() -> Html {
     let is_password_error = use_state(|| true);
     let is_button_enabled = use_state(|| false);
     let navigator = use_navigator().unwrap();
-
-
 
     let validate_info = |info: &RegisterInfo| {
         validate_email(info) && validate_password(info) && validate_user(info)
@@ -188,6 +186,7 @@ pub fn register() -> Html {
                     { "Register" }
                 </FormSubmitBtn>
             </form>
+        <p> {"Or "} <Link<Route> to={Route::Login}>{"login using an existing account"}</Link<Route>>{" instead?"}</p>
 
         </CenteredBox>
     }

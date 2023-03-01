@@ -137,3 +137,6 @@ api_request!(
     GET,
     Vec<EventStream>
 );
+
+api_request_with_path!(registration_get, GET, Snowflake, PendingRegistration, "auth/registration/{}", .to_string());
+api_request_with_path!(registration_confirm, POST, Snowflake, ConfirmRegistrationRequest, ConfirmRegistrationResponse, "auth/registration/{}/confirm", .to_string());

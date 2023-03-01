@@ -13,3 +13,12 @@ pub fn danger_alert(props: &AlertProps) -> Html {
         </div>
     }
 }
+
+#[function_component(SuccessAlert)]
+pub fn success_alert(props: &AlertProps) -> Html {
+    html! {
+        <div class="alert alert-success" role="alert">
+            {props.message.clone()}
+        </div>
+    }
+}

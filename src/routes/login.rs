@@ -3,7 +3,7 @@ use serde::Serialize;
 use yew::prelude::*;
 
 use yew_hooks::use_async;
-use yew_router::prelude::use_navigator;
+use yew_router::prelude::*;
 
 use crate::api::*;
 
@@ -103,7 +103,7 @@ pub fn login_page() -> Html {
                     { "Login" }
                 </FormSubmitBtn>
             </form>
-
+        <p> {"Or "} <Link<Route> to={Route::Register}>{"create an account"}</Link<Route>>{" instead?"}</p>
         </CenteredBox>
     }
 }

@@ -10,6 +10,8 @@ mod dashboard;
 use dashboard::Dashboard;
 mod register;
 use register::Register;
+mod confirm_register;
+use confirm_register::ConfirmRegister;
 
 use crate::components::BigError;
 
@@ -32,9 +34,9 @@ pub enum Route {
     #[at("/dashboard/profile")]
     DashboardProfile,
 
-    #[at("/register")]
+    #[at("/registration/new")]
     Register,
-    #[at("/confirm_register/:id")]
+    #[at("/registration/:id/confirm")]
     ConfirmRegister { id: Snowflake },
 
     #[not_found]
@@ -56,6 +58,7 @@ pub fn switch(routes: Route) -> Html {
         Route::DashboardProfile => html! { <Dashboard /> },
 
         Route::Register => html! { <Register /> },
+        Route::ConfirmRegister { id } => html! { <ConfirmRegister registration_id={id} /> },
 
         Route::NotFound => html! { <h1>{ "404" }</h1> },
         #[allow(unreachable_patterns)]
