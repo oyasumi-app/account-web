@@ -83,17 +83,19 @@ pub fn register() -> Html {
                     let response = api::auth_register(request).await;
                     is_registering.set(false);
                     match response {
-                        Ok(api_types::v1::RegistrationResponse::Ok { id }) => {
-                            navigator.push(&Route::ConfirmRegister { id });
-                        }
-                        Ok(api_types::v1::RegistrationResponse::PendingRegistrationExists {
-                            id,
-                        }) => {
-                            navigator.push(&Route::ConfirmRegister { id });
-                        }
-                        Ok(api_types::v1::RegistrationResponse::DatabaseError) => {
-                            // TODO: retry?
-                        }
+                        Ok(api::ResponseType_auth_register::Status200(resp)) => match resp {
+                            api_types::v1::RegistrationResponse::Ok { id } => {
+                                navigator.push(&Route::ConfirmRegister { id });
+                            }
+                            api_types::v1::RegistrationResponse::PendingRegistrationExists {
+                                id,
+                            } => {
+                                navigator.push(&Route::ConfirmRegister { id });
+                            }
+                            api_types::v1::RegistrationResponse::DatabaseError => {
+                                // TODO: retry?
+                            }
+                        },
                         Err(_) => {
                             // TODO: retry?
                         }

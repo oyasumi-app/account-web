@@ -3,140 +3,230 @@ use crate::api::*;
 use crate::endpoint;
 use api_types::v1::*;
 use api_types::Snowflake;
+use gloo_net::http::Response;
+use serde::de::DeserializeOwned;
 
 /// This struct is used to convince the type system to allow us to send_request a None body:
 /// if it were Some, it would have to be a type that implements Serialize.
 #[derive(serde::Serialize)]
 struct NoBody;
 
-/// This macro generates a function that sends a request to the API.
-/// It accepts the following arguments:
-///
-/// - `name`: the name of the function, e.g. "auth_login"
-/// - `path`: the path of the endpoint, e.g. "auth/login"
-/// - `method`: the HTTP method to use, e.g. "POST"
-/// - `body`: the type of the request body, e.g. `LoginRequest` (optional)
-/// - `response`: the type of the response body, e.g. `LoginResponse` (optional, if not provided, the function returns a bool of status==2xx)
+/// This trait is implemented on data types which can be passed as path arguments.
+trait AsPathFragment {
+    fn to_path_fragment(&self) -> String;
+}
+
+impl AsPathFragment for Snowflake {
+    fn to_path_fragment(&self) -> String {
+        self.to_string()
+    }
+}
+
+/// This function parses a [`gloo_net::http::Response`] with JSON,
+/// except for if we want to parse into the unit type;
+/// in that case, it just returns the unit type.
+async fn parse_json<T: DeserializeOwned>(response: Response) -> Result<T, gloo_net::Error> {
+    // If the type's size is equal to zero, it is the unit type.
+    // So do not try deserializing it.
+    if std::mem::size_of::<T>() == 0 {
+        // Instead, conjure an instance of the ZST by transmuting the unit type
+        // into the given type.
+        // This is safe, because we know that both types have the same size (zero).
+        let output: T = unsafe { std::mem::transmute_copy(&()) };
+        return Ok(output);
+    }
+
+    response.json::<T>().await
+}
+
 macro_rules! api_request {
-    // Request has body and response type
-    ($name:ident, $path:expr, $method:ident, $body:ty, $response:ty) => {
-        pub async fn $name(body: $body) -> Result<$response, gloo_net::Error> {
-            log::debug!("-> {}({body:?})", stringify!($name));
-            let url = endpoint!($path);
-            let response = send_request(&url, gloo_net::http::Method::$method, Some(body)).await?;
-            let response = response.json::<$response>().await?;
-            log::debug!("<- {response:?}");
-            Ok(response)
+    // Request has no body: api_request!(check_token: GET "auth/token/@me" => (200 TokenData) (404 ()) )
+    ($name:ident : $method:ident $path:literal => $( ( $status:literal $responsetype:ty ) )+) => {
+        paste::paste!{
+            #[derive(Debug)]
+            #[allow(non_camel_case_types)]
+            pub enum [<ResponseType_ $name>] {
+                $(
+                    [<Status $status>]($responsetype),
+                )*
+            }
+            pub async fn $name() -> Result<[<ResponseType_ $name>], gloo_net::Error> {
+                log::debug!("-> {}()", stringify!($name));
+                let url = endpoint!($path);
+                let missing_body: Option<NoBody> = None;
+                let response =
+                    send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
+                let response = match response.status() {
+                    $(
+                        $status => {
+                            let content = response.json::<$responsetype>().await?;
+                            [<ResponseType_ $name>]::[<Status $status>](content)
+                        },
+                    )*
+                    other => return Err(gloo_net::Error::GlooError(format!("In $name, received unexpected status: {}", other)))
+                };
+                log::debug!("<- {response:?}");
+                Ok(response)
+            }
         }
     };
 
-    // Request has no body and a response type
-    ($name:ident, $path:expr, $method:ident, $response:ty) => {
-        pub async fn $name() -> Result<$response, gloo_net::Error> {
-            log::debug!("-> {}()", stringify!($name));
-            let url = endpoint!($path);
-            let missing_body: Option<NoBody> = None;
-            let response =
-                send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
-            let response = response.json::<$response>().await?;
-            log::debug!("<- {response:?}");
-            Ok(response)
-        }
-    };
-
-    // Request has no body and no response type (returns whether request returned a 2xx status code)
-    ($name:ident, $path:expr, $method:ident) => {
-        pub async fn $name() -> Result<bool, gloo_net::Error> {
-            log::debug!("-> {}()", stringify!($name));
-            let url = endpoint!($path);
-            let missing_body: Option<NoBody> = None;
-            let response =
-                send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
-            log::debug!("<- {response:?}");
-            Ok(response.ok())
+    // Request has a body: api_request!(check_token: POST "auth/login" (LoginRequest) => (200 LoginResponse) (404 ()) )
+    ($name:ident : $method:ident $path:literal ($requestbody:ty) => $( ( $status:literal $responsetype:ty ) )+) => {
+        paste::paste!{
+            #[derive(Debug)]
+            #[allow(non_camel_case_types)]
+            pub enum [<ResponseType_ $name>] {
+                $(
+                    [<Status $status>]($responsetype),
+                )*
+            }
+            pub async fn $name(body: $requestbody) -> Result<[<ResponseType_ $name>], gloo_net::Error> {
+                log::debug!("-> {}()", stringify!($name));
+                let url = endpoint!($path);
+                let body = Some(body);
+                let response =
+                    send_request(&url, gloo_net::http::Method::$method, body).await?;
+                let response = match response.status() {
+                    $(
+                        $status => {
+                            let content = response.json::<$responsetype>().await?;
+                            [<ResponseType_ $name>]::[<Status $status>](content)
+                        },
+                    )*
+                    other => return Err(gloo_net::Error::GlooError(format!("In $name, received unexpected status: {}", other)))
+                };
+                log::debug!("<- {response:?}");
+                Ok(response)
+            }
         }
     };
 }
 
-/// This macro generates a function that sends a request to the API,
-/// where the path contains placeholders that are replaced by the arguments.
-/// It accepts the following arguments:
-/// - `name`: the name of the function, e.g. "auth_get_token"
-/// - `path`: the path of the endpoint as a format string, e.g. "auth/token/by_id/{args.0}"
-/// - `method`: the HTTP method to use, e.g. "GET"
-/// - `args`: the type of the arguments, e.g. `(Snowflake,)`
-/// - `response`: the type of the response body, e.g. `TokenData`
+macro_rules! ident_as_format_question {
+    ($what:ident) => {
+        "{:?}, "
+    };
+}
+
 macro_rules! api_request_with_path {
-    // Request has a body and a response type
-    ($name: ident, $method: ident, $arg_type: ty, $body_type: ty, $response: ty, $path_format_string: literal, $($path_format_arg: tt)*) => {
-        pub async fn $name(args: $arg_type, body: $body_type) -> Result<$response, gloo_net::Error> {
-            log::debug!("-> {}({args:?}; {body:?})", stringify!($name));
-            let url_fragment = format!($path_format_string, args $($path_format_arg)*);
-            let url = endpoint!(url_fragment);
-            let body = Some(body);
-            let response =
-                send_request(&url, gloo_net::http::Method::$method, body).await?;
-            let response = response.json::<$response>().await?;
-            log::debug!("<- {response:?}");
-            Ok(response)
+    // Request has no body: api_request!(registration_get: GET "auth/registration/{}" (reg_id Snowflake, .to_string()) => (200 TokenData) (404 ()) )
+    ($name:ident : $method:ident $path_format_string:literal $( ( $path_fragment_name: ident $path_fragment_type:ty $(,)? ) )* => $( ( $status:literal $responsetype:ty ) )+) => {
+        paste::paste!{
+            #[derive(Debug)]
+            #[allow(non_camel_case_types)]
+            pub enum [<ResponseType_ $name>] {
+                $(
+                    [<Status $status>]($responsetype),
+                )*
+            }
+            pub async fn $name(
+                $(
+                    $path_fragment_name : $path_fragment_type,
+                )*
+
+            ) -> Result<[<ResponseType_ $name>], gloo_net::Error> {
+                log::debug!(
+                    concat!("-> ", stringify!($name), "(",
+                    $(
+                        ident_as_format_question!($path_fragment_name),
+                    )*
+                    ")"
+                    ),
+                $($path_fragment_name,)*
+                );
+                let url_fragment = format!(
+                    $path_format_string,
+                    $(
+                        AsPathFragment::to_path_fragment(&$path_fragment_name),
+                    )*
+                );
+                let url = endpoint!(url_fragment);
+
+                let missing_body: Option<NoBody> = None;
+                let response =
+                    send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
+                let response = match response.status() {
+                    $(
+                        $status => {
+                            let content = parse_json::<$responsetype>(response).await?;
+                            [<ResponseType_ $name>]::[<Status $status>](content)
+                        },
+                    )*
+                    other => return Err(gloo_net::Error::GlooError(format!("In $name, received unexpected status: {}", other)))
+                };
+                log::debug!("<- {response:?}");
+                Ok(response)
+            }
         }
     };
 
+    // Request has body: api_request!(registration_get: GET "auth/registration/{}" (reg_id Snowflake, .to_string()) => (200 TokenData) (404 ()) )
+    ($name:ident : $method:ident $path_format_string:literal $( ( $path_fragment_name: ident $path_fragment_type:ty ) $(,)? )* => $body_type:ty => $( ( $status:literal $responsetype:ty ) )+) => {
+        paste::paste!{
+            #[derive(Debug)]
+            #[allow(non_camel_case_types)]
+            pub enum [<ResponseType_ $name>] {
+                $(
+                    [<Status $status>]($responsetype),
+                )*
+            }
+            pub async fn $name(
+                $(
+                    $path_fragment_name : $path_fragment_type,
+                )*
+                body: $body_type,
 
-    // Request has no body and a response type
-    ($name: ident, $method: ident, $arg_type: ty, $response: ty, $path_format_string: literal, $($path_format_arg: tt)*) => {
-        pub async fn $name(args: $arg_type) -> Result<$response, gloo_net::Error> {
-            log::debug!("-> {}({args:?})", stringify!($name));
-            let url_fragment = format!($path_format_string, args $($path_format_arg)*);
-            let url = endpoint!(url_fragment);
-            let missing_body: Option<NoBody> = None;
-            let response =
-                send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
-            let response = response.json::<$response>().await?;
-            log::debug!("<- {response:?}");
-            Ok(response)
+            ) -> Result<[<ResponseType_ $name>], gloo_net::Error> {
+                log::debug!(
+                    concat!("-> ", stringify!($name), "(",
+                    $(
+                        ident_as_format_question!($path_fragment_name),
+                    )*
+                    "{:?})" // for body
+                    ),
+                $($path_fragment_name,)*
+                body
+                );
+                let url_fragment = format!(
+                    $path_format_string,
+                    $(
+                        AsPathFragment::to_path_fragment(&$path_fragment_name),
+                    )*
+                );
+                let url = endpoint!(url_fragment);
+
+                let body = Some(body);
+                let response =
+                    send_request(&url, gloo_net::http::Method::$method, body).await?;
+                let response = match response.status() {
+                    $(
+                        $status => {
+                            let content = parse_json::<$responsetype>(response).await?;
+                            [<ResponseType_ $name>]::[<Status $status>](content)
+                        },
+                    )*
+                    other => return Err(gloo_net::Error::GlooError(format!("In $name, received unexpected status: {}", other)))
+                };
+                log::debug!("<- {response:?}");
+                Ok(response)
+            }
         }
     };
-
-    // Request has no body and no response type (returns whether request returned a 2xx status code)
-    ($name: ident, $method: ident, $arg_type: ty, $path_format_string: literal, $($path_format_arg: tt)*) => {
-        pub async fn $name(args: $arg_type) -> Result<bool, gloo_net::Error> {
-            log::debug!("-> {}({args:?})", stringify!($name));
-            let url_fragment = format!($path_format_string, args $($path_format_arg)*);
-            let url = endpoint!(url_fragment);
-            let missing_body: Option<NoBody> = None;
-            let response =
-                send_request(&url, gloo_net::http::Method::$method, missing_body).await?;
-            log::debug!("<- {response:?}");
-            Ok(response.ok())
-        }
-    };
-
 }
-
-api_request!(auth_check, "auth/check", GET, CheckResponse);
-api_request!(auth_login, "auth/login", POST, LoginRequest, LoginResponse);
-api_request!(auth_get_current_token, "auth/token/@me", GET, TokenData);
+api_request!(auth_check: GET "auth/check" => (200 CheckResponse));
+api_request!(auth_login: POST "auth/login" (LoginRequest) => (200 LoginSuccess) (401 LoginError));
+api_request!(auth_get_current_token: GET "auth/token/@me" => (200 TokenData));
 api_request!(
-    auth_register,
-    "auth/registration",
-    POST,
-    RegistrationRequest,
-    RegistrationResponse
+    auth_register: POST
+    "auth/registration" (RegistrationRequest) => (200 RegistrationResponse)
 );
-api_request!(auth_logout, "auth/token/@me", DELETE);
-api_request!(auth_get_tokens, "auth/token/list", GET, Vec<Snowflake>);
+api_request!(auth_logout: DELETE "auth/token/@me" => (204 ()));
+api_request!(auth_get_tokens: GET "auth/token/list" => (200 Vec<Snowflake>));
 
-api_request_with_path!(auth_get_token, GET, Snowflake, TokenData, "auth/token/by_id/{}", .to_string());
-api_request_with_path!(auth_delete_token, DELETE, Snowflake, "auth/token/by_id/{}", .to_string());
-api_request!(auth_delete_other_tokens, "auth/token/list", DELETE);
+api_request_with_path!(auth_get_token: GET "auth/token/by_id/{}" (id Snowflake,) => (200 TokenData) (404 ()));
+api_request_with_path!(auth_delete_token: DELETE "auth/token/by_id/{}" (id Snowflake,) => (204 ()) (404 ()));
+api_request!(auth_delete_other_tokens: DELETE "auth/token/list" => (204 ()));
 
-api_request!(
-    events_get_stream_list,
-    "events/stream/list",
-    GET,
-    Vec<EventStream>
-);
-
-api_request_with_path!(registration_get, GET, Snowflake, PendingRegistration, "auth/registration/{}", .to_string());
-api_request_with_path!(registration_confirm, POST, Snowflake, ConfirmRegistrationRequest, ConfirmRegistrationResponse, "auth/registration/{}/confirm", .to_string());
+api_request_with_path!(registration_get: GET "auth/registration/{}" (id Snowflake,) => (200 PendingRegistration) (404 ()));
+api_request_with_path!(registration_confirm: POST "auth/registration/{}/confirm" (id Snowflake) => ConfirmRegistrationRequest => (200 ConfirmRegistrationResponse));

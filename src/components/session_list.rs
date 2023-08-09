@@ -66,7 +66,7 @@ fn session_list_inner() -> HtmlResult {
     };
 
     let result_html = match &*sessions {
-        Ok(token_snowflakes) => {
+        Ok(ResponseType_auth_get_tokens::Status200(token_snowflakes)) => {
             let session_list_rows = token_snowflakes
                 .iter()
                 .map(|token_snowflake| {
@@ -96,7 +96,7 @@ fn session_list_inner() -> HtmlResult {
                 </>
             }
         }
-        Err(_) => {
+        _ => {
             html! {
                 <DangerAlert message="Failed to load your sessions. Try reloading the page." />
             }
@@ -145,7 +145,7 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
         use_async(async move {
             is_deleting.set(true);
             let res = auth_delete_token(*token_id).await;
-            if let Ok(true) = res {
+            if let Ok(ResponseType_auth_delete_token::Status204(_)) = res {
                 log::info!("Revoked token: {}", *token_id);
                 is_hidden.set(true);
                 if *is_current_session {
@@ -175,9 +175,8 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
         true => "btn-danger",
         false => "btn-secondary",
     };
-
     let result_html = match &*session {
-        Ok(token_info) => {
+        Ok(ResponseType_auth_get_token::Status200(token_info)) => {
             html! {
                 <div class={classes!("card", "mb-3", highlight_class)}>
                     <div class="card-body">
@@ -191,7 +190,7 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
                 </div>
             }
         }
-        Err(_) => {
+        _ => {
             html! {
                 <DangerAlert message={format!("Failed to load info on session {}. Try reloading the page.", props.session_id)} />
             }

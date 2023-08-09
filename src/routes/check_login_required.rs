@@ -19,7 +19,7 @@ pub fn check_login_required() -> Html {
         let response = auth_check().await;
 
         match response {
-            Ok(api_types::v1::CheckResponse::ValidToken(_)) => {
+            Ok(ResponseType_auth_check::Status200(api_types::v1::CheckResponse::ValidToken(_))) => {
                 navigator.push(&Route::DashboardHome);
             }
             _ => {

@@ -69,7 +69,7 @@ fn confirm_inner(props: &ConfirmRegisterProps) -> HtmlResult {
                 token: token_info.token.clone(),
             };
             let response = registration_confirm(registration_id, request).await;
-            if let Ok(response) = response {
+            if let Ok(api::ResponseType_registration_confirm::Status200(response)) = response {
                 match response {
                     ConfirmRegistrationResponse::Ok { token: _token } => {
                         navigator.push(&Route::DashboardHome);

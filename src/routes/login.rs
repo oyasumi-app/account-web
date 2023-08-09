@@ -1,3 +1,4 @@
+use api_types::v1::LoginSuccess;
 use serde::Deserialize;
 use serde::Serialize;
 use yew::prelude::*;
@@ -12,7 +13,6 @@ use crate::components::FormSubmitBtn;
 use crate::components::FormTextBox;
 use crate::components::Size;
 use crate::Route;
-use api_types::v1::LoginResponse;
 use web_sys::HtmlInputElement;
 
 use crate::components::LoadingSpinner;
@@ -52,7 +52,7 @@ pub fn login_page() -> Html {
             is_logging_in.set(true);
             let response = auth_login(request).await;
             match response {
-                Ok(LoginResponse::Ok { token: _ }) => {
+                Ok(ResponseType_auth_login::Status200(LoginSuccess { token: _ })) => {
                     log::info!("Logged in!");
 
                     navigator.push(&Route::DashboardHome);

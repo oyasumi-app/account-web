@@ -38,7 +38,9 @@ fn dashboard_inner() -> HtmlResult {
 
     let context = use_memo(
         |_| match &*req_result {
-            Ok(info) => UserContext::LoggedIn(info.clone()),
+            Ok(api::ResponseType_auth_get_current_token::Status200(info)) => {
+                UserContext::LoggedIn(info.clone())
+            }
             Err(_) => UserContext::LoggedOut,
         },
         (),

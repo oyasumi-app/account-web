@@ -3,7 +3,7 @@ use std::{borrow::Borrow, rc::Rc};
 use api_types::v1::TokenData;
 use yew::prelude::*;
 
-use crate::{components::stream_list::StreamList, context::UserContext};
+use crate::context::UserContext;
 
 #[function_component(DashboardHome)]
 pub fn dashboard_home() -> Html {
@@ -19,8 +19,6 @@ pub fn dashboard_home() -> Html {
         <>
             <h1>{format!("Welcome, {}!", user.username)}</h1>
             <p>{"This is the home page for the dashboard."}</p>
-
-            <StreamList />
         </>
     }
 }

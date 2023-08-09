@@ -26,7 +26,7 @@ pub fn logout_button(props: &LogoutButtonProps) -> Html {
             is_logging_out.set(true);
             let response = auth_logout().await;
             match response {
-                Ok(true) => {
+                Ok(crate::api::ResponseType_auth_logout::Status204(_)) => {
                     log::info!("Logged out!");
                     navigator.push(&Route::Login);
                 }

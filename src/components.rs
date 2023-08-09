@@ -8,4 +8,3 @@ pub mod logout_button;
 pub use logout_button::*;
 pub mod session_list;
 pub use session_list::*;
-pub mod stream_list;
