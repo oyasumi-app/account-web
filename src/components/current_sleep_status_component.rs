@@ -1,15 +1,19 @@
-use std::time::{Duration, SystemTime};
+use std::{
+    future::Future,
+    pin::Pin,
+    time::{Duration, SystemTime},
+};
 
 use api_types::v1::DateTimeUtc;
 use yew::{prelude::*, suspense::use_future_with_deps};
-use yew_hooks::{use_async, use_interval, use_update};
+use yew_hooks::{use_interval, use_update};
 
 use crate::{
     api::{
         sleep_create_new_current, sleep_delete_current, sleep_get_current, sleep_set_current_end,
         sleep_set_current_start,
     },
-    components::{Button, Color},
+    components::{AsyncButton, Button, Color},
 };
 
 /// Component that indicates the current sleep state
@@ -20,9 +24,7 @@ pub fn current_sleep_status_component() -> Html {
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">{"Loading current sleep state..."}</h4>
-                <p class="card-text placeholder-wave">
-                    <span class="placeholder col-7" />
-                </p>
+                <Button class="w-100 btn-lg mb-2" text="Loading..." color={Color::Primary} onclick={Callback::noop()} />
             </div>
         </div>
     );
@@ -33,73 +35,62 @@ pub fn current_sleep_status_component() -> Html {
         </Suspense>
     )
 }
+
+trait Ignorable {
+    fn ignore(self);
+}
+
+impl<T, E> Ignorable for Result<T, E> {
+    fn ignore(self) {}
+}
+
 #[function_component(CurrentSleepStatusInner)]
 fn current_sleep_status_inner() -> HtmlResult {
     let deps = use_state(|| 0usize);
     let sleep_state = use_future_with_deps(|_| async move { sleep_get_current().await }, *deps);
     let sleep_state = sleep_state?;
 
-    let wake_up_action = {
+    let wake_up_fn = {
         let deps = deps.clone();
-        use_async(async move {
-            let result = sleep_set_current_end().await.ok().ok_or(());
-            deps.set(*deps + 1);
-            result
+        Callback::from(move |_: ()| -> Pin<Box<dyn Future<Output = ()>>> {
+            let deps = deps.clone();
+            Box::pin(async move {
+                sleep_set_current_end().await.ignore();
+                deps.set(*deps + 1);
+            })
         })
     };
 
-    let wake_up_cb = {
-        let wake_up_action = wake_up_action.clone();
-        Callback::from(move |_: ()| {
-            wake_up_action.run();
-        })
-    };
-
-    let start_sleep_action = {
+    let start_sleep_fn = {
         let deps = deps.clone();
-        use_async(async move {
-            let result = sleep_create_new_current().await.ok().ok_or(());
-            deps.set(*deps + 1);
-            result
+        Callback::from(move |_: ()| -> Pin<Box<dyn Future<Output = ()>>> {
+            let deps = deps.clone();
+            Box::pin(async move {
+                sleep_create_new_current().await.ignore();
+                deps.set(*deps + 1);
+            })
         })
     };
 
-    let start_sleep_cb = {
-        let start_sleep_action = start_sleep_action.clone();
-        Callback::from(move |_: ()| {
-            start_sleep_action.run();
-        })
-    };
-
-    let update_start_action = {
+    let update_start_fn = {
         let deps = deps.clone();
-        use_async(async move {
-            let result = sleep_set_current_start().await.ok().ok_or(());
-            deps.set(*deps + 1);
-            result
+        Callback::from(move |_: ()| -> Pin<Box<dyn Future<Output = ()>>> {
+            let deps = deps.clone();
+            Box::pin(async move {
+                sleep_set_current_start().await.ignore();
+                deps.set(*deps + 1);
+            })
         })
     };
 
-    let update_start_cb = {
-        let update_start_action = update_start_action.clone();
-        Callback::from(move |_: ()| {
-            update_start_action.run();
-        })
-    };
-
-    let delete_sleep_action = {
+    let delete_sleep_fn = {
         let deps = deps.clone();
-        use_async(async move {
-            let result = sleep_delete_current().await.ok().ok_or(());
-            deps.set(*deps + 1);
-            result
-        })
-    };
-
-    let delete_sleep_cb = {
-        let delete_sleep_action = delete_sleep_action.clone();
-        Callback::from(move |_: ()| {
-            delete_sleep_action.run();
+        Callback::from(move |_: ()| -> Pin<Box<dyn Future<Output = ()>>> {
+            let deps = deps.clone();
+            Box::pin(async move {
+                sleep_delete_current().await.ignore();
+                deps.set(*deps + 1);
+            })
         })
     };
 
@@ -111,10 +102,10 @@ fn current_sleep_status_inner() -> HtmlResult {
                         <div class="card-body">
                             <h4 class="card-title">{"You have been sleeping for "}<SleepTimer since={state.start} /></h4>
 
-                            <Button class="btn btn-success w-100 btn-lg mb-2" text="Wake up" color={Color::Success} onclick={wake_up_cb} spinning={wake_up_action.loading}/>
+                            <AsyncButton class="btn-success w-100 btn-lg mb-2" text="Wake up" color={Color::Success} onclick_fn={wake_up_fn} />
                             <div class="btn-group btn-sm w-100 mb-2">
-                                <Button class="" text="Could not fall asleep before" color={Color::Warning} onclick={update_start_cb} spinning={update_start_action.loading}/>
-                                <Button class="" text="Did not go to sleep at all" color={Color::Danger} onclick={delete_sleep_cb} spinning={delete_sleep_action.loading}/>
+                                <AsyncButton class="" text="Could not fall asleep before" color={Color::Warning} onclick_fn={update_start_fn} />
+                                <AsyncButton class="" text="Did not go to sleep at all" color={Color::Danger} onclick_fn={delete_sleep_fn}/>
                             </div>
 
                         </div>
@@ -126,7 +117,7 @@ fn current_sleep_status_inner() -> HtmlResult {
                     <div class="card-body">
                         <h4 class="card-title">{"You are not currently sleeping"}</h4>
 
-                        <Button class="btn w-100 btn-lg mb-2" text="Go to sleep" color={Color::Primary} onclick={start_sleep_cb} spinning={start_sleep_action.loading}/>
+                        <AsyncButton class="w-100 btn-lg mb-2" text="Go to sleep" color={Color::Primary} onclick_fn={start_sleep_fn}/>
                     </div>
                 </div>
             ),
@@ -154,10 +145,17 @@ fn sleep_timer(props: &SleepTimerProps) -> Html {
     let update = use_update();
     use_interval(move || update(), 1000);
 
+    #[allow(unused_unsafe)]
     let now = unsafe { get_unix_timestamp() };
     let now = DateTimeUtc::from(SystemTime::UNIX_EPOCH + Duration::from_secs_f64(now));
 
-    let elapsed = props.since - now;
+    let elapsed = now - props.since;
+    let seconds = elapsed.num_seconds();
+    let minutes = seconds / 60;
+    let hours = minutes / 60;
+    let minutes = minutes % 60;
+    let seconds = seconds % 60;
+    let time = format!("{hours}:{minutes:02}:{seconds:02}");
 
-    html!(<>{elapsed}</>)
+    html!(<>{time}</>)
 }
