@@ -43,7 +43,7 @@ macro_rules! api_request {
     // Request has no body: api_request!(check_token: GET "auth/token/@me" => (200 TokenData) (404 ()) )
     ($name:ident : $method:ident $path:literal => $( ( $status:literal $responsetype:ty ) )+) => {
         paste::paste!{
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             #[allow(non_camel_case_types)]
             pub enum [<ResponseType_ $name>] {
                 $(
@@ -59,7 +59,7 @@ macro_rules! api_request {
                 let response = match response.status() {
                     $(
                         $status => {
-                            let content = response.json::<$responsetype>().await?;
+                            let content = parse_json::<$responsetype>(response).await?;
                             [<ResponseType_ $name>]::[<Status $status>](content)
                         },
                     )*
@@ -74,7 +74,7 @@ macro_rules! api_request {
     // Request has a body: api_request!(check_token: POST "auth/login" (LoginRequest) => (200 LoginResponse) (404 ()) )
     ($name:ident : $method:ident $path:literal ($requestbody:ty) => $( ( $status:literal $responsetype:ty ) )+) => {
         paste::paste!{
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             #[allow(non_camel_case_types)]
             pub enum [<ResponseType_ $name>] {
                 $(
@@ -90,7 +90,7 @@ macro_rules! api_request {
                 let response = match response.status() {
                     $(
                         $status => {
-                            let content = response.json::<$responsetype>().await?;
+                            let content = parse_json::<$responsetype>(response).await?;
                             [<ResponseType_ $name>]::[<Status $status>](content)
                         },
                     )*
@@ -113,7 +113,7 @@ macro_rules! api_request_with_path {
     // Request has no body: api_request!(registration_get: GET "auth/registration/{}" (reg_id Snowflake, .to_string()) => (200 TokenData) (404 ()) )
     ($name:ident : $method:ident $path_format_string:literal $( ( $path_fragment_name: ident $path_fragment_type:ty $(,)? ) )* => $( ( $status:literal $responsetype:ty ) )+) => {
         paste::paste!{
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             #[allow(non_camel_case_types)]
             pub enum [<ResponseType_ $name>] {
                 $(
@@ -164,7 +164,7 @@ macro_rules! api_request_with_path {
     // Request has body: api_request!(registration_get: GET "auth/registration/{}" (reg_id Snowflake, .to_string()) => (200 TokenData) (404 ()) )
     ($name:ident : $method:ident $path_format_string:literal $( ( $path_fragment_name: ident $path_fragment_type:ty ) $(,)? )* => $body_type:ty => $( ( $status:literal $responsetype:ty ) )+) => {
         paste::paste!{
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             #[allow(non_camel_case_types)]
             pub enum [<ResponseType_ $name>] {
                 $(
@@ -230,3 +230,15 @@ api_request!(auth_delete_other_tokens: DELETE "auth/token/list" => (204 ()));
 
 api_request_with_path!(registration_get: GET "auth/registration/{}" (id Snowflake,) => (200 PendingRegistration) (404 ()));
 api_request_with_path!(registration_confirm: POST "auth/registration/{}/confirm" (id Snowflake) => ConfirmRegistrationRequest => (200 ConfirmRegistrationResponse));
+
+api_request!(sleep_list: GET "sleep/list" => (200 Vec<SleepState>) (404 ()));
+api_request!(sleep_create_new_current: POST "sleep/new" => (201 SleepState) (409 ()));
+
+api_request_with_path!(sleep_get_by_id: GET "sleep/{}" (id Snowflake) => (200 SleepState) (404 ()));
+api_request_with_path!(sleep_put_by_id: PUT "sleep/{}" (id Snowflake) => SleepState => (204 ()) (404 ()));
+api_request_with_path!(sleep_delete_by_id: DELETE "sleep/{}" (id Snowflake) => (204 ()) (404 ()));
+
+api_request!(sleep_get_current: GET "sleep/@current" => (200 SleepState) (404 ()));
+api_request!(sleep_set_current_start: PUT "sleep/@current" => (204 ()) (404 ()));
+api_request!(sleep_set_current_end: POST "sleep/@current" => (204 ()) (404 ()));
+api_request!(sleep_delete_current: DELETE "sleep/@current" => (204 ()) (404 ()));

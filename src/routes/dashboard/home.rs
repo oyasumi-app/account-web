@@ -3,6 +3,7 @@ use std::{borrow::Borrow, rc::Rc};
 use api_types::v1::TokenData;
 use yew::prelude::*;
 
+use crate::components::current_sleep_status_component::CurrentSleepStatusComponent;
 use crate::context::UserContext;
 
 #[function_component(DashboardHome)]
@@ -18,7 +19,7 @@ pub fn dashboard_home() -> Html {
     html! {
         <>
             <h1>{format!("Welcome, {}!", user.username)}</h1>
-            <p>{"This is the home page for the dashboard."}</p>
+            <CurrentSleepStatusComponent />
         </>
     }
 }

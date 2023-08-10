@@ -10,3 +10,5 @@ pub(crate) mod full_page;
 pub use full_page::*;
 pub mod alert;
 pub use alert::*;
+pub mod button;
+pub use button::*;
