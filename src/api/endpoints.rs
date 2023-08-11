@@ -231,7 +231,7 @@ api_request!(auth_delete_other_tokens: DELETE "auth/token/list" => (204 ()));
 api_request_with_path!(registration_get: GET "auth/registration/{}" (id Snowflake,) => (200 PendingRegistration) (404 ()));
 api_request_with_path!(registration_confirm: POST "auth/registration/{}/confirm" (id Snowflake) => ConfirmRegistrationRequest => (200 ConfirmRegistrationResponse));
 
-api_request!(sleep_list: GET "sleep/list" => (200 Vec<SleepState>) (404 ()));
+api_request!(sleep_get_list: GET "sleep/list" => (200 Vec<SleepState>) (404 ()));
 api_request!(sleep_create_new_current: POST "sleep/new" => (201 SleepState) (409 ()));
 
 api_request_with_path!(sleep_get_by_id: GET "sleep/{}" (id Snowflake) => (200 SleepState) (404 ()));

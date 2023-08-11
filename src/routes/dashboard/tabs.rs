@@ -8,7 +8,7 @@ pub fn get_dashboard_tab() -> Html {
     let route = use_route().expect("called get_dashboard_tab with unknown route");
     match route {
         Route::DashboardHome => html! { <super::home::DashboardHome /> },
-        Route::Dashboard1 => html! { <h1>{"Tab 1"}</h1> },
+        Route::DashboardSleepHistory => html! { <super::sleep_history::SleepHistory /> },
         Route::Dashboard2 => html! { <h1>{"Tab 2"}</h1> },
         Route::DashboardProfile => html! { <super::profile_page::DashboardProfile /> },
         _ => panic!("called get_dashboard_tab with route that is not a dashboard tab (specifically, {route:?})"),
@@ -21,7 +21,7 @@ pub fn dashboard_tab_column() -> Html {
 
     let routes = vec![
         (Route::DashboardHome, "Home"),
-        (Route::Dashboard1, "Tab 1"),
+        (Route::DashboardSleepHistory, "Sleep history"),
         (Route::Dashboard2, "Tab 2"),
         (Route::DashboardProfile, "Profile Settings"),
     ];

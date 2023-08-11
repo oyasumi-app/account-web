@@ -13,6 +13,7 @@ use crate::Route;
 mod home;
 mod profile_page;
 mod tabs;
+mod sleep_history;
 
 #[function_component(Dashboard)]
 pub fn dashboard() -> Html {

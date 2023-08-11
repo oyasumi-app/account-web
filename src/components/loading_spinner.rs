@@ -39,12 +39,12 @@ pub fn loading_spinner(props: &LoadingProps) -> Html {
         }
     } else if props.inline {
         html! {
-            <span class={classes!("spinner-border", props.size.class("spinner-border"))} role="status" style={format!("visibility: hidden; {}", props.style)}>
+            <span class={classes!("spinner-border", props.size.class("spinner-border"))} role="status" style={format!("display: none; {}", props.style)}>
             </span>
         }
     } else {
         html! {
-            <div class="d-flex justify-content-center" style="visibility: hidden">
+            <div class="d-flex justify-content-center" style="display: none">
                 <span class={classes!("spinner-border", props.size.class("spinner-border"))} role="status" style={props.style.clone()}>
                 </span>
             </div>

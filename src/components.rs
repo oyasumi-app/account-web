@@ -1,7 +1,10 @@
 pub mod current_sleep_status_component;
-mod loading_spinner;
+pub use current_sleep_status_component::*;
+pub mod loading_spinner;
 pub use loading_spinner::*;
-pub(crate) mod style;
+pub mod sleep_list;
+pub use sleep_list::*;
+pub mod style;
 pub use style::*;
 pub mod navbar;
 pub use navbar::*;

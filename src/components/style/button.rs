@@ -104,7 +104,7 @@ pub fn async_button(props: &AsyncButtonProps) -> Html {
             html! {
                 <button class={classes!(props.class.clone(), "btn", format!("btn-{}", props.color), props.size.class("btn"))}
                 onclick={btn_cb}>
-                    <LoadingSpinner show={false} />
+                    <LoadingSpinner show={false} inline={true} size={Size::Small} />
                     {&props.text}
                 </button>
             }
@@ -112,7 +112,7 @@ pub fn async_button(props: &AsyncButtonProps) -> Html {
             html! {
                 <button disabled={true} class={classes!(props.class.clone(), "btn", format!("btn-{}", props.color), props.size.class("btn"))}
                 >
-                    <LoadingSpinner show={true} />
+                    <LoadingSpinner show={true} inline={true} size={Size::Small} />
                     {&props.text}
                 </button>
             }
@@ -120,7 +120,7 @@ pub fn async_button(props: &AsyncButtonProps) -> Html {
     } else {
         html! {
             <button disabled={true} class={classes!(props.class.clone(), "btn", format!("btn-{}", props.color), props.size.class("btn"))}>
-                <LoadingSpinner show={action.loading} />
+                <LoadingSpinner show={action.loading} inline={true} size={Size::Small}/>
                 {&props.text}
             </button>
         }

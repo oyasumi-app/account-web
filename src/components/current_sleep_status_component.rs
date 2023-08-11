@@ -131,8 +131,8 @@ fn current_sleep_status_inner() -> HtmlResult {
 }
 
 #[derive(PartialEq, Debug, Clone, Properties)]
-struct SleepTimerProps {
-    since: DateTimeUtc,
+pub struct SleepTimerProps {
+    pub since: DateTimeUtc,
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
@@ -141,7 +141,7 @@ extern "C" {
 }
 
 #[function_component(SleepTimer)]
-fn sleep_timer(props: &SleepTimerProps) -> Html {
+pub fn sleep_timer(props: &SleepTimerProps) -> Html {
     let update = use_update();
     use_interval(move || update(), 1000);
 

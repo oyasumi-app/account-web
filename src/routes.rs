@@ -28,7 +28,7 @@ pub enum Route {
     DashboardHome,
 
     #[at("/dashboard/1")]
-    Dashboard1,
+    DashboardSleepHistory,
     #[at("/dashboard/2")]
     Dashboard2,
     #[at("/dashboard/profile")]
@@ -53,7 +53,7 @@ pub fn switch(routes: Route) -> Html {
         Route::Login => html! { <Login /> },
         Route::DashboardHome => html! { <Dashboard /> },
 
-        Route::Dashboard1 => html! { <Dashboard /> },
+        Route::DashboardSleepHistory => html! { <Dashboard /> },
         Route::Dashboard2 => html! { <Dashboard /> },
         Route::DashboardProfile => html! { <Dashboard /> },
 
