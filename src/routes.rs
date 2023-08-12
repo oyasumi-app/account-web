@@ -27,7 +27,7 @@ pub enum Route {
     #[at("/dashboard")]
     DashboardHome,
 
-    #[at("/dashboard/1")]
+    #[at("/dashboard/history")]
     DashboardSleepHistory,
     #[at("/dashboard/2")]
     Dashboard2,

@@ -6,6 +6,7 @@ use yew::{prelude::*, suspense::use_future_with_deps};
 use crate::{
     api::*,
     components::{AsyncButton, Color, DangerAlert, SleepTimer},
+    utils::get_current_time,
 };
 
 #[function_component(SleepList)]
@@ -15,9 +16,21 @@ pub fn sleep_list() -> Html {
             <div class="btn-group mb-3" role="group">
                 <button class="btn btn-primary placeholder" disabled={true}>{"Refresh"}</button>
             </div>
-            <SleepListFallback />
-            <SleepListFallback />
-            <SleepListFallback />
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        <th scope="col">{"Start time"}</th>
+                        <th scope="col">{"End time"}</th>
+                        <th scope="col">{"Duration"}</th>
+                        <th scope="col">{"Actions"}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <SleepListFallback />
+                    <SleepListFallback />
+                    <SleepListFallback />
+                </tbody>
+            </table>
         </>
     };
 
@@ -47,11 +60,21 @@ fn sleep_list_inner() -> HtmlResult {
 
     let result_html = match &*states {
         Ok(ResponseType_sleep_get_list::Status200(sleep_states)) => {
+            let mut sleep_states = sleep_states.clone();
+            sleep_states.sort_by(|a, b| {
+                b.end
+                    .or_else(|| Some(get_current_time()))
+                    .unwrap()
+                    .cmp(&a.end.or_else(|| Some(get_current_time())).unwrap())
+            });
             let sleep_rows = sleep_states
                 .iter()
                 .map(|state| {
+                    let fallback = html!(<SleepListFallback />);
                     html! {
-                        <SleepListRow sleep_id={state.id} />
+                        <Suspense {fallback}>
+                            <SleepListRow sleep_id={state.id} />
+                        </Suspense>
                     }
                 })
                 .collect::<Html>();
@@ -67,7 +90,19 @@ fn sleep_list_inner() -> HtmlResult {
                     </div>
 
 
-                    { sleep_rows }
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col">{"Start time"}</th>
+                                <th scope="col">{"End time"}</th>
+                                <th scope="col">{"Duration"}</th>
+                                <th scope="col">{"Actions"}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            { sleep_rows }
+                        </tbody>
+                    </table>
                 </>
             }
         }
@@ -139,34 +174,35 @@ fn sleep_list_row(props: &SleepListRowProps) -> HtmlResult {
                 None => String::new(),
             };
 
-            let end_lines = match state.end {
+            let end_times = match state.end {
                 Some(end) => html!(<>
-                    <p class="card-text">{"Ended at: "}{end}</p>
-                    <p class="card-text">{"Elapsed: "}{duration}</p>
+                    <td>{end}</td>
+                    <td>{duration}</td>
                 </>),
                 None => html!(
                     <>
-                        <p class="card-text">{"Not ended yet "}</p>
-                        <p class="card-text">{"Elapsed: "}<SleepTimer since={state.start} /></p>
+                        <td>{"Not ended yet "}</td>
+                        <td><SleepTimer since={state.start} /></td>
                     </>
                 ),
             };
             html! {
-                <div class={classes!("card", "mb-3")}>
-                    <div class="card-body">
-                        <h5 class="card-title">{state.id}</h5>
-                        <p class="card-text">{"Started at: "}{state.start}</p>
-                        {end_lines}
-                        <div class="btn-group">
-                            <AsyncButton class="" text="Delete" color={Color::Danger} onclick_fn={delete_fn} />
-                        </div>
-                    </div>
-                </div>
+                <tr>
+                    <td>{state.start}</td>
+                    {end_times}
+                    <td>
+                        <AsyncButton class="" text="Delete" color={Color::Danger} onclick_fn={delete_fn} />
+                    </td>
+                </tr>
             }
         }
         _ => {
             html! {
-                <DangerAlert message={format!("Failed to load info on sleep state {}. Try reloading the page.", props.sleep_id)} />
+                <tr>
+                    <td colspan="4" class="text-danger">
+                    {"Failed to load info on sleep state "}{props.sleep_id}{". Try reloading the page."}
+                    </td>
+                </tr>
             }
         }
     };
@@ -182,16 +218,13 @@ fn sleep_list_fallback() -> Html {
         })
     };
     html! {
-        <div class={classes!("card", "mb-3")}>
-            <div class="card-body">
-                <h5 class="card-title"><span class="placeholder col-5" /></h5>
-                <p class="card-text"><span class="placeholder col-4" /></p>
-                <p class="card-text"><span class="placeholder col-4" /></p>
-                <p class="card-text"><span class="placeholder col-3" /></p>
-                <div class="btn-group">
-                    <AsyncButton enabled={false} class="" text="Delete" color={Color::Danger} onclick_fn={delete_fn} />
-                </div>
-            </div>
-        </div>
+        <tr>
+            <td><span class="placeholder col-4" /></td>
+            <td><span class="placeholder col-3" /></td>
+            <td><span class="placeholder col-4" /></td>
+            <td>
+            <AsyncButton enabled={false} class="" text="Delete" color={Color::Danger} onclick_fn={delete_fn} />
+            </td>
+        </tr>
     }
 }

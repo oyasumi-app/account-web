@@ -8,6 +8,7 @@ use wasm_bindgen::prelude::*;
 mod components;
 mod context;
 mod routes;
+mod utils;
 
 #[macro_use]
 mod api;

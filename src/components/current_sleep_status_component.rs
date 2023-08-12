@@ -14,6 +14,7 @@ use crate::{
         sleep_set_current_start,
     },
     components::{AsyncButton, Button, Color},
+    utils::get_current_time,
 };
 
 /// Component that indicates the current sleep state
@@ -135,20 +136,12 @@ pub struct SleepTimerProps {
     pub since: DateTimeUtc,
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen]
-extern "C" {
-    pub fn get_unix_timestamp() -> f64;
-}
-
 #[function_component(SleepTimer)]
 pub fn sleep_timer(props: &SleepTimerProps) -> Html {
     let update = use_update();
     use_interval(move || update(), 1000);
 
-    #[allow(unused_unsafe)]
-    let now = unsafe { get_unix_timestamp() };
-    let now = DateTimeUtc::from(SystemTime::UNIX_EPOCH + Duration::from_secs_f64(now));
-
+    let now = get_current_time();
     let elapsed = now - props.since;
     let seconds = elapsed.num_seconds();
     let minutes = seconds / 60;
