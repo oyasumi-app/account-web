@@ -228,6 +228,7 @@ api_request_with_path!(auth_get_token: GET "auth/token/by_id/{}" (id Snowflake,)
 api_request_with_path!(auth_delete_token: DELETE "auth/token/by_id/{}" (id Snowflake,) => (204 ()) (404 ()));
 api_request!(auth_delete_other_tokens: DELETE "auth/token/list" => (204 ()));
 
+api_request!(registration_get_prerequisites: GET "auth/registration" => (200 RegistrationPrerequisites));
 api_request_with_path!(registration_get: GET "auth/registration/{}" (id Snowflake,) => (200 PendingRegistration) (404 ()));
 api_request_with_path!(registration_confirm: POST "auth/registration/{}/confirm" (id Snowflake) => ConfirmRegistrationRequest => (200 ConfirmRegistrationResponse));
 
