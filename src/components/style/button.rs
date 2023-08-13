@@ -19,7 +19,7 @@ pub struct ButtonProps {
     #[prop_or(true)]
     pub enabled: bool,
 
-    #[prop_or(true)]
+    #[prop_or(false)]
     pub spinning: bool,
 
     pub text: AttrValue,
@@ -42,7 +42,7 @@ pub fn button(props: &ButtonProps) -> Html {
             html! {
                 <button class={classes!(props.class.clone(), "btn", format!("btn-{}", props.color), props.size.class("btn"))}
                 onclick={btn_cb}>
-                    <LoadingSpinner show={false} />
+                    <LoadingSpinner show={false} inline={true} size={Size::Small} />
                     {&props.text}
                 </button>
             }
@@ -50,7 +50,7 @@ pub fn button(props: &ButtonProps) -> Html {
             html! {
                 <button disabled={true} class={classes!(props.class.clone(), "btn", format!("btn-{}", props.color), props.size.class("btn"))}
                 >
-                    <LoadingSpinner show={true} />
+                    <LoadingSpinner show={true} inline={true} size={Size::Small} />
                     {&props.text}
                 </button>
             }
@@ -58,7 +58,7 @@ pub fn button(props: &ButtonProps) -> Html {
     } else {
         html! {
             <button disabled={true} class={classes!(props.class.clone(), "btn", format!("btn-{}", props.color), props.size.class("btn"))}>
-                <LoadingSpinner show={false} />
+                <LoadingSpinner show={false} inline={true} size={Size::Small} />
                 {&props.text}
             </button>
         }

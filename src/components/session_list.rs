@@ -2,12 +2,13 @@ use std::rc::Rc;
 
 use api_types::Snowflake;
 use yew::{prelude::*, suspense::use_future_with_deps};
+use yew_bootstrap::{component::Alert, util::Color};
 use yew_hooks::use_async;
 use yew_router::prelude::use_navigator;
 
 use crate::{
     api::*,
-    components::{DangerAlert, LoadingSpinner, Size},
+    components::{LoadingSpinner, Size},
     context::UserContext,
     Route,
 };
@@ -98,7 +99,7 @@ fn session_list_inner() -> HtmlResult {
         }
         _ => {
             html! {
-                <DangerAlert message="Failed to load your sessions. Try reloading the page." />
+                <Alert style={Color::Danger}>{"Failed to load your sessions. Try reloading the page."}</Alert>
             }
         }
     };
@@ -192,7 +193,7 @@ fn session_list_row(props: &SessionListRowProps) -> HtmlResult {
         }
         _ => {
             html! {
-                <DangerAlert message={format!("Failed to load info on session {}. Try reloading the page.", props.session_id)} />
+                <Alert style={Color::Danger}>{"Failed to load info on session "}{props.session_id}{". Try reloading the page."}</Alert>
             }
         }
     };

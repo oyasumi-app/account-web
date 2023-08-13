@@ -20,3 +20,6 @@ console_error_panic_hook = "0.1.7"
 wasm-bindgen = "0.2.83"
 html-escape = { version = "0.2.13", default-features = false }
 paste = "1.0.14"
+gloo-worker = "0.4.0"
+gloo-utils = "0.2.0"
+yew-bootstrap = "0.5.16"

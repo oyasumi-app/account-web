@@ -4,13 +4,14 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 use yew::suspense::use_future;
+use yew_bootstrap::component::Alert;
+use yew_bootstrap::util::Color;
 use yew_hooks::use_async;
 use yew_router::prelude::*;
 
 use crate::api::registration_confirm;
 use crate::{api, Route};
 
-use crate::components::style::alert::{DangerAlert, SuccessAlert};
 use crate::components::style::Size;
 use crate::components::CenteredBox;
 use crate::components::FormSubmitBtn;
@@ -25,7 +26,7 @@ pub struct ConfirmRegisterProps {
 #[function_component(ConfirmRegister)]
 pub fn confirm_register(props: &ConfirmRegisterProps) -> Html {
     let fallback = html! {
-        <SuccessAlert message={"Loading your registration..."} />
+        <Alert style={Color::Success}>{"Loading your registration..."}</Alert>
     };
 
     html! {
@@ -108,7 +109,7 @@ fn confirm_inner(props: &ConfirmRegisterProps) -> HtmlResult {
 
     let maybe_error_alert = if *is_token_error {
         html! {
-            <DangerAlert message="Error confirming your token. Please check your email again." />
+            <Alert style={Color::Danger}>{"Error confirming your token. Please check your email again."}</Alert>
         }
     } else {
         html! {}

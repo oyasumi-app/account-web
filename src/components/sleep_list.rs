@@ -1,11 +1,15 @@
 use std::{future::Future, pin::Pin};
 
-use api_types::Snowflake;
+use api_types::{v1::SleepState, Snowflake};
 use yew::{prelude::*, suspense::use_future_with_deps};
+use yew_bootstrap::{
+    component::{Alert, Button, Modal, ModalBody, ModalFooter, ModalHeader},
+    util::Color,
+};
 
 use crate::{
     api::*,
-    components::{AsyncButton, Color, DangerAlert, SleepTimer},
+    components::{AsyncButton, SleepTimer},
     utils::get_current_time,
 };
 
@@ -108,7 +112,7 @@ fn sleep_list_inner() -> HtmlResult {
         }
         _ => {
             html! {
-                <DangerAlert message="Failed to load your sleep records. Try reloading the page." />
+                <Alert style={Color::Danger}>{"Failed to load your sleep records. Try reloading the page."}</Alert>
             }
         }
     };
@@ -191,7 +195,8 @@ fn sleep_list_row(props: &SleepListRowProps) -> HtmlResult {
                     <td>{state.start}</td>
                     {end_times}
                     <td>
-                        <AsyncButton class="" text="Delete" color={Color::Danger} onclick_fn={delete_fn} />
+                        <AsyncButton class="" text="Delete" color={crate::components::Color::Danger} onclick_fn={delete_fn} />
+                        <SleepListRowEdit sleep_state={state.clone()}/>
                     </td>
                 </tr>
             }
@@ -223,8 +228,31 @@ fn sleep_list_fallback() -> Html {
             <td><span class="placeholder col-3" /></td>
             <td><span class="placeholder col-4" /></td>
             <td>
-            <AsyncButton enabled={false} class="" text="Delete" color={Color::Danger} onclick_fn={delete_fn} />
+            <AsyncButton enabled={false} class="" text="Delete" color={crate::components::Color::Danger} onclick_fn={delete_fn} />
             </td>
         </tr>
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Properties)]
+struct SleepListRowEditProps {
+    sleep_state: SleepState,
+}
+
+#[function_component(SleepListRowEdit)]
+fn sleep_list_row_edit(props: &SleepListRowEditProps) -> Html {
+    let id = format!("sleep_edit-{}", props.sleep_state.id.to_string());
+    html!(
+        <>
+            <Modal id={id.clone()}>
+                <ModalHeader title="Editing sleep record" id={id.clone()} />
+                <ModalBody>
+                    <p>{"TODO"}</p>
+                </ModalBody>
+                <ModalFooter>
+                </ModalFooter>
+            </Modal>
+            <Button modal_target={id.clone()}>{"Edit"}</Button>
+        </>
+    )
 }
